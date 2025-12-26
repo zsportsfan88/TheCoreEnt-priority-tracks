@@ -2,176 +2,169 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Priority Tracks - V24</title>
+    <title>The Core - Priority Tracks V25</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        :root { --gold: #C5A059; --bg: #000; --border: #333; }
+        :root { --gold: #C5A059; --bg: #000; --border: #222; }
         * { box-sizing: border-box; }
-        body { background: var(--bg); color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        aside { width: 160px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; display: flex; flex-direction: column; flex-shrink: 0; }
-        .nav { flex: 1; overflow-y: auto; margin-top: 20px; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { padding: 10px; cursor: pointer; color: #777; font-size: 0.75rem; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        aside { width: 160px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
+        .nav { flex: 1; overflow-y: auto; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 8px 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         li:hover { color: #fff; background: #1a1a1a; }
-        li.active { color: var(--gold); font-weight: bold; background: #111; border: 1px solid var(--gold); }
+        li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
 
-        main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #000; }
-        .top-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .header { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         
-        .scroll-area { flex: 1; overflow: auto; background: #000; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+        .table-wrapper { flex: 1; overflow: auto; background: #000; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: auto; }
 
-        /* FIXED: Headers strictly gold and visible */
+        /* HEADER FIX: Forced Visibility */
         thead th { 
             position: sticky; top: 0; z-index: 100;
-            background: #111 !important; 
+            background: #0a0a0a !important; 
             color: var(--gold) !important;
-            padding: 12px; font-size: 0.65rem; text-transform: uppercase;
-            border-bottom: 2px solid var(--gold); text-align: left;
+            padding: 12px 15px; font-size: 0.65rem; text-transform: uppercase;
+            border-bottom: 2px solid var(--border); text-align: left;
+            white-space: nowrap;
         }
 
-        /* FIXED: Song Column exactly 150px */
-        .col-song { 
+        /* SONG COLUMN FIX: 150px Wide */
+        .sticky-song { 
             position: sticky; left: 0; z-index: 110;
-            width: 150px !important; min-width: 150px !important;
-            background: #050505 !important; 
+            width: 150px !important; min-width: 150px !important; max-width: 150px !important;
+            background: #0f0f0f !important; 
             border-right: 2px solid var(--border);
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        thead th.col-song { z-index: 120; background: #111 !important; }
+        thead th.sticky-song { z-index: 120; background: #0a0a0a !important; }
 
-        td { padding: 12px; font-size: 0.8rem; border-bottom: 1px solid #1a1a1a; white-space: nowrap; color: #ddd; }
+        td { padding: 12px 15px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: #fff; white-space: nowrap; }
         
-        /* Tooltip Style for 'Last Updated' */
-        .curr-streams { 
-            color: var(--gold); 
-            font-weight: bold; 
-            text-decoration: underline dotted #555;
-            cursor: help; 
-        }
+        /* HEAT CELLS - Black Text, Bold */
+        .heat-cell { color: #000 !important; font-weight: 900; text-align: center; }
 
-        .heat-cell { color: #000 !important; font-weight: 800; text-align: center; border-radius: 2px; }
+        /* TOOLTIP: Last Updated */
+        .stream-cell { color: var(--gold); font-weight: bold; cursor: help; text-decoration: underline dotted #444; }
 
-        .btn-group { display: flex; gap: 5px; background: #111; padding: 4px; border-radius: 6px; border: 1px solid var(--border); }
-        .tgl { background: transparent; border: none; color: #666; padding: 6px 12px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
-        .tgl.active { background: var(--gold); color: #000; border-radius: 4px; }
+        .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 6px 12px; cursor: pointer; font-size: 0.7rem; font-weight: bold; border-radius: 4px; }
+        .toggle-btn.active { background: linear-gradient(145deg, #f3d082, #a17d3a); color: #000; }
     </style>
 </head>
 <body>
 
 <aside>
-    <div style="color:var(--gold); font-weight:900; text-align:center; font-size:0.9rem;">THE CORE</div>
+    <div style="color:var(--gold); font-weight:900; letter-spacing:2px; margin-bottom:20px; text-align:center;">THE CORE</div>
     <div class="nav"><ul id="artist-list"></ul></div>
-    <li onclick="clearFilter()" style="text-align:center; color:var(--gold); margin-top:10px; border:1px solid #333;">RESET</li>
+    <li onclick="clearFilter()" style="list-style:none; color:var(--gold); text-align:center; border: 1px solid #333; margin-top:10px;">SHOW ALL</li>
 </aside>
 
 <main>
-    <div class="top-bar">
+    <div class="header">
         <h2 id="view-title" style="margin:0; font-size:1.1rem;">Priority Tracks</h2>
-        <div class="btn-group">
-            <button id="btn-released" class="tgl active" onclick="setMode('released')">RELEASED</button>
-            <button id="btn-unreleased" class="tgl" onclick="setMode('unreleased')">UNRELEASED</button>
+        <div style="display:flex; gap:10px;">
+            <button id="btn-released" class="toggle-btn active" onclick="setMode('released')">RELEASED</button>
+            <button id="btn-unreleased" class="toggle-btn" onclick="setMode('unreleased')">UNRELEASED</button>
         </div>
     </div>
-    <div class="scroll-area" id="table-output"></div>
+    <div class="table-wrapper" id="table-output"></div>
 </main>
 
 <script>
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp-yQVU_VNNOR5aXQ7m-Xv7BiAgYKjBfJuT6lIETy6ksjqR-Lj2WW4DNqYGCNX2rfCpUtemiS1shes/pub?gid=2070907343&single=true&output=csv';
+const MASTER_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp-yQVU_VNNOR5aXQ7m-Xv7BiAgYKjBfJuT6lIETy6ksjqR-Lj2WW4DNqYGCNX2rfCpUtemiS1shes/pub?gid=2070907343&single=true&output=csv';
 const ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wisham", "Cameron Whitcomb", "Dan + Shay", "Danielle Bradbery", "Dax", "Deltona", "Hannah McFarland", "Josh Ross", "Just Jayne", "Nate Smith"];
+const EXCEPTIONS = ["Lonely Dirt Road", "Single Again", "Fix What You Didn't Break"];
 
-let masterData = [];
+let allData = [];
 let currentFilter = null;
 let currentMode = 'released';
 
-function setMode(m) { currentMode = m; document.querySelectorAll('.tgl').forEach(b=>b.classList.remove('active')); document.getElementById('btn-'+m).classList.add('active'); render(); }
-function clearFilter() { currentFilter = null; document.getElementById('view-title').innerText = "Priority Tracks"; document.querySelectorAll('li').forEach(l=>l.classList.remove('active')); render(); }
+function setMode(m) { currentMode = m; document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active')); document.getElementById('btn-'+m).classList.add('active'); render(); }
+function clearFilter() { currentFilter = null; document.getElementById('view-title').innerText = "Priority Tracks"; render(); }
 
-const parseVal = (v) => parseFloat(String(v).replace(/,/g,'')) || 0;
+const n = (v) => parseFloat(String(v).replace(/,/g,'')) || 0;
 
-function getHeat(val, min, max) {
-    let n = parseVal(val); if (n === 0) return 'background:#222; color:#555 !important;';
-    let ratio = (n - min) / (max - min || 1);
-    let r = ratio < 0.5 ? 255 : Math.floor((1 - (ratio - 0.5) * 2) * 255);
-    let g = ratio > 0.5 ? 255 : Math.floor((ratio * 2) * 255);
-    return `background:rgb(${r},${g},150);`;
+function getRelativeHeat(val, min, max) {
+    let num = n(val); if (num === 0 && min === 0) return 'background: #333; color: #888 !important;';
+    if (min === max) return 'background: #fff;';
+    const ratio = (num - min) / (max - min || 1);
+    let r, g;
+    if (ratio < 0.5) { let f = ratio * 2; r = 255; g = Math.floor(f * 255); } 
+    else { let f = (ratio - 0.5) * 2; r = Math.floor((1 - f) * 255); g = 255; }
+    return `background: rgb(${r},${g},150);`;
+}
+
+function getFixedHeat(val, good, bad) {
+    let num = n(val);
+    if (num >= good) return 'background: #1DB954;';
+    if (num <= bad) return 'background: #ff4444;';
+    return 'background: #fff;';
 }
 
 function render() {
     const today = new Date(); today.setHours(0,0,0,0);
-    
-    let songs = masterData.filter(r => {
-        if (!ARTISTS.includes(r[0])) return false;
-        const relDate = new Date(r[3]);
-        const isTBD = !r[3] || r[3].toLowerCase().includes('tbd');
-        const isReleased = (!isTBD && !isNaN(relDate) && relDate <= today);
-        
-        // Tab Filtering
-        if (currentMode === 'released' && !isReleased) return false;
-        if (currentMode === 'unreleased' && isReleased) return false;
-        
-        // Year Filtering (2025+)
-        if (!isTBD && !isNaN(relDate) && relDate.getFullYear() <= 2024) {
-            const exceptions = ["Lonely Dirt Road", "Single Again", "Fix What You Didn't Break"];
-            if (!exceptions.some(ex => r[1].includes(ex))) return false;
-        }
+    let songs = allData.filter(r => {
+        const artist = r[0]; const title = r[1]; const dateStr = r[3] || "";
+        const relDate = new Date(dateStr);
+        const isTBD = dateStr.toLowerCase().includes('tbd') || dateStr === "";
+        const isExc = EXCEPTIONS.some(ex => title.includes(ex));
 
-        return currentFilter ? r[0] === currentFilter : true;
+        if (!ARTISTS.includes(artist)) return false;
+        if (!isTBD && !isNaN(relDate) && relDate.getFullYear() <= 2024 && !isExc) return false;
+
+        const released = (!isTBD && !isNaN(relDate) && relDate <= today);
+        if (currentMode === 'released' && !released) return false;
+        if (currentMode === 'unreleased' && released) return false;
+
+        return currentFilter ? artist === currentFilter : true;
     });
 
-    let headers = `<thead><tr>
-        <th class="col-song">Song</th>
-        <th style="width:140px">Artist</th>
-        <th style="width:100px">1st Tease</th>
-        <th style="width:100px">Rel Date</th>`;
-    
+    let headers = `<thead><tr><th class="sticky-song">Song</th><th>Artist</th><th>1st Tease</th><th>Rel Date</th>`;
     if (currentMode === 'released') {
-        headers += `<th style="width:130px">Curr Streams</th>
-                    <th class="heat-cell" style="width:120px">Weekly Avg</th>
-                    <th class="heat-cell" style="width:120px">Total UGC</th></tr></thead>`;
+        headers += `<th class="heat-cell">Pre-Rel</th><th class="heat-cell">1st Wk</th><th class="heat-cell">Post-Rel</th><th>Current</th><th class="heat-cell">Avg Wk</th><th class="heat-cell">Total Posts</th><th class="heat-cell">Total UGC</th></tr></thead>`;
     } else {
-        headers += `<th class="heat-cell" style="width:120px">Pre-Rel Posts</th>
-                    <th class="heat-cell" style="width:120px">Total UGC</th>
-                    <th style="width:200px"></th></tr></thead>`;
+        headers += `<th class="heat-cell">Pre-Rel Posts</th><th class="heat-cell">Total Posts</th><th class="heat-cell">Total UGC</th></tr></thead>`;
     }
 
     let body = `<tbody>`;
     songs.forEach(r => {
-        // DATA MAPPING:
-        // r[4] = Date Updated
-        // r[7] = Current Streams
-        // r[9] = Weekly Average
-        // r[36] = Total UGC
-        // r[40] = Pre-Release Posts
-        
+        const artistSongs = songs.filter(s => s[0] === r[0]);
+        const ugcMin = Math.min(...songs.map(s => n(s[36])));
+        const ugcMax = Math.max(...songs.map(s => n(s[36])));
+
         body += `<tr>
-            <td class="col-song" title="${r[1]}">${r[1]}</td>
+            <td class="sticky-song" title="${r[1]}">${r[1]}</td>
             <td>${r[0]}</td>
-            <td>${r[2] || '-'}</td>
+            <td style="font-size:0.7rem;">${r[2] || '-'}</td>
             <td style="color:var(--gold); font-weight:bold;">${r[3] || 'TBD'}</td>`;
         
         if (currentMode === 'released') {
             body += `
-                <td><span class="curr-streams" title="Last Updated: ${r[4] || 'N/A'}">${r[7] || '0'}</span></td>
-                <td class="heat-cell" style="${getHeat(r[9], 0, 500000)}">${r[9] || '0'}</td>
-                <td class="heat-cell" style="${getHeat(r[36], 0, 10000)}">${r[36] || '0'}</td>`;
+                <td class="heat-cell" style="${getFixedHeat(r[40], 20, 10)}">${r[40] || '0'}</td>
+                <td class="heat-cell" style="${getRelativeHeat(r[6], 0, 100000)}">${r[6] || '0'}</td>
+                <td class="heat-cell" style="${getFixedHeat(r[41], 20, 15)}">${r[41] || '0'}</td>
+                <td class="stream-cell" title="Date Updated: ${r[4] || 'N/A'}">${r[7] || '0'}</td>
+                <td class="heat-cell" style="${getRelativeHeat(r[9], 0, 50000)}">${r[9] || '0'}</td>
+                <td class="heat-cell" style="${getFixedHeat(r[42], 40, 20)}">${r[42] || '0'}</td>
+                <td class="heat-cell" style="${getRelativeHeat(r[36], ugcMin, ugcMax)}">${r[36] || '0'}</td>`;
         } else {
             body += `
-                <td class="heat-cell" style="${getHeat(r[40], 0, 50)}">${r[40] || '0'}</td>
-                <td class="heat-cell" style="${getHeat(r[36], 0, 10000)}">${r[36] || '0'}</td>
-                <td></td>`;
+                <td class="heat-cell" style="${getFixedHeat(r[40], 20, 10)}">${r[40] || '0'}</td>
+                <td class="heat-cell" style="${getFixedHeat(r[42], 40, 20)}">${r[42] || '0'}</td>
+                <td class="heat-cell" style="${getRelativeHeat(r[36], ugcMin, ugcMax)}">${r[36] || '0'}</td>`;
         }
         body += `</tr>`;
     });
-    
     document.getElementById('table-output').innerHTML = `<table>${headers}${body}</tbody></table>`;
 }
 
-Papa.parse(CSV_URL, {
+Papa.parse(MASTER_CSV, {
     download: true,
     complete: (res) => {
-        masterData = res.data.slice(1);
+        allData = res.data.slice(1);
         const list = document.getElementById('artist-list');
         ARTISTS.sort().forEach(a => {
             let li = document.createElement('li'); li.innerText = a;
