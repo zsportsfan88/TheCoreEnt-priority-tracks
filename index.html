@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Core - Priority Tracks V33</title>
+    <title>The Core - Priority Tracks V34</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --gold: #C5A059; --bg: #000; --border: #333; }
@@ -33,21 +33,28 @@
             word-wrap: break-word; white-space: normal;
         }
 
+        /* WIDENED SONG COLUMN (210px) */
         .sticky-song { 
             position: sticky; left: 0; z-index: 210;
-            width: 185px !important; min-width: 185px !important;
+            width: 210px !important; min-width: 210px !important;
             background-color: #0a0a0a !important; 
             border-right: 2px solid var(--border);
             font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
             text-align: center;
         }
         thead th.sticky-song { z-index: 250; background-color: #111 !important; }
-        .artist-cell { text-align: center; width: 130px; }
+
+        /* WIDENED ARTIST COLUMN (160px) */
+        .artist-cell { 
+            text-align: center; 
+            width: 160px !important; 
+            min-width: 160px !important;
+        }
 
         td { padding: 12px 10px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: #fff; white-space: nowrap; }
         
         .heat-cell { color: #000 !important; font-weight: 900; text-align: center; }
-        .date-col { font-size: 0.75rem; color: #888; text-align: center; width: 85px; }
+        .date-col { font-size: 0.75rem; color: #888; text-align: center; width: 90px; }
         .stream-val { color: var(--gold); font-weight: bold; text-align: center; }
 
         .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 6px 12px; cursor: pointer; font-size: 0.7rem; font-weight: bold; border-radius: 4px; }
@@ -118,7 +125,7 @@ function render() {
         return currentFilter ? artist === currentFilter : true;
     });
 
-    let head = `<thead><tr><th class="sticky-song">Song</th><th class="artist-cell">Artist</th><th style="width:95px">1st Song Tease</th><th style="width:95px">Release Date</th><th style="width:85px" class="date-col">Last Updated</th>`;
+    let head = `<thead><tr><th class="sticky-song">Song</th><th class="artist-cell">Artist</th><th style="width:100px">1st Song Tease</th><th style="width:100px">Release Date</th><th style="width:90px" class="date-col">Last Updated</th>`;
 
     if (currentMode === 'released') {
         head += `<th style="width:115px">Pre-Rel Posts/ Platform</th><th style="width:110px">1st Wk Streams</th><th style="width:115px">Post-Rel Posts/ Platform</th><th style="width:120px">Current Streams</th><th style="width:110px">Avg Weekly Streams</th><th style="width:115px">Total Posts/ Platform</th><th style="width:105px">Total UGC</th>`;
