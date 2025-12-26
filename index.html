@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Core - Priority Tracks V25</title>
+    <title>The Core - Priority Tracks V26</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --gold: #C5A059; --bg: #000; --border: #222; }
@@ -12,46 +12,46 @@
         aside { width: 160px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
         .nav { flex: 1; overflow-y: auto; }
         ul { list-style: none; padding: 0; }
-        li { padding: 8px 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        li { padding: 8px 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; }
         li:hover { color: #fff; background: #1a1a1a; }
         li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
 
         main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-        .header { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .header-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         
         .table-wrapper { flex: 1; overflow: auto; background: #000; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: auto; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
 
-        /* HEADER FIX: Forced Visibility */
+        /* HEADER: Increased Height & Text Wrapping */
         thead th { 
             position: sticky; top: 0; z-index: 100;
             background: #0a0a0a !important; 
             color: var(--gold) !important;
-            padding: 12px 15px; font-size: 0.65rem; text-transform: uppercase;
-            border-bottom: 2px solid var(--border); text-align: left;
-            white-space: nowrap;
+            padding: 15px 10px; font-size: 0.7rem; text-transform: uppercase;
+            border-bottom: 2px solid var(--gold); text-align: left;
+            height: 60px; vertical-align: bottom; line-height: 1.2;
         }
 
-        /* SONG COLUMN FIX: 150px Wide */
+        /* SONG COLUMN: Locked 150px */
         .sticky-song { 
             position: sticky; left: 0; z-index: 110;
-            width: 150px !important; min-width: 150px !important; max-width: 150px !important;
+            width: 150px !important; min-width: 150px !important;
             background: #0f0f0f !important; 
             border-right: 2px solid var(--border);
             font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         thead th.sticky-song { z-index: 120; background: #0a0a0a !important; }
 
-        td { padding: 12px 15px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: #fff; white-space: nowrap; }
+        td { padding: 12px 10px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: #fff; white-space: nowrap; }
         
-        /* HEAT CELLS - Black Text, Bold */
+        /* COLORS: Restored Magenta/Green Heat Map */
         .heat-cell { color: #000 !important; font-weight: 900; text-align: center; }
 
-        /* TOOLTIP: Last Updated */
+        /* HOVER: Date Updated Tooltip */
         .stream-cell { color: var(--gold); font-weight: bold; cursor: help; text-decoration: underline dotted #444; }
 
         .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 6px 12px; cursor: pointer; font-size: 0.7rem; font-weight: bold; border-radius: 4px; }
-        .toggle-btn.active { background: linear-gradient(145deg, #f3d082, #a17d3a); color: #000; }
+        .toggle-btn.active { background: var(--gold); color: #000; }
     </style>
 </head>
 <body>
@@ -63,7 +63,7 @@
 </aside>
 
 <main>
-    <div class="header">
+    <div class="header-bar">
         <h2 id="view-title" style="margin:0; font-size:1.1rem;">Priority Tracks</h2>
         <div style="display:flex; gap:10px;">
             <button id="btn-released" class="toggle-btn active" onclick="setMode('released')">RELEASED</button>
@@ -76,7 +76,6 @@
 <script>
 const MASTER_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp-yQVU_VNNOR5aXQ7m-Xv7BiAgYKjBfJuT6lIETy6ksjqR-Lj2WW4DNqYGCNX2rfCpUtemiS1shes/pub?gid=2070907343&single=true&output=csv';
 const ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wisham", "Cameron Whitcomb", "Dan + Shay", "Danielle Bradbery", "Dax", "Deltona", "Hannah McFarland", "Josh Ross", "Just Jayne", "Nate Smith"];
-const EXCEPTIONS = ["Lonely Dirt Road", "Single Again", "Fix What You Didn't Break"];
 
 let allData = [];
 let currentFilter = null;
@@ -87,21 +86,17 @@ function clearFilter() { currentFilter = null; document.getElementById('view-tit
 
 const n = (v) => parseFloat(String(v).replace(/,/g,'')) || 0;
 
-function getRelativeHeat(val, min, max) {
+// FIX: Corrected Magenta-to-Green Heat Map logic
+function getHeat(val, min, max) {
     let num = n(val); if (num === 0 && min === 0) return 'background: #333; color: #888 !important;';
-    if (min === max) return 'background: #fff;';
     const ratio = (num - min) / (max - min || 1);
-    let r, g;
-    if (ratio < 0.5) { let f = ratio * 2; r = 255; g = Math.floor(f * 255); } 
-    else { let f = (ratio - 0.5) * 2; r = Math.floor((1 - f) * 255); g = 255; }
-    return `background: rgb(${r},${g},150);`;
-}
-
-function getFixedHeat(val, good, bad) {
-    let num = n(val);
-    if (num >= good) return 'background: #1DB954;';
-    if (num <= bad) return 'background: #ff4444;';
-    return 'background: #fff;';
+    if (ratio < 0.5) {
+        let f = ratio * 2;
+        return `background: rgb(255, ${Math.floor(f * 50)}, ${Math.floor(127 + f * 128)});`; // Neon Magenta/Pink scale
+    } else {
+        let f = (ratio - 0.5) * 2;
+        return `background: rgb(${Math.floor((1-f)*255)}, 255, ${Math.floor((1-f)*255)});`; // Neon Green scale
+    }
 }
 
 function render() {
@@ -110,55 +105,47 @@ function render() {
         const artist = r[0]; const title = r[1]; const dateStr = r[3] || "";
         const relDate = new Date(dateStr);
         const isTBD = dateStr.toLowerCase().includes('tbd') || dateStr === "";
-        const isExc = EXCEPTIONS.some(ex => title.includes(ex));
-
-        if (!ARTISTS.includes(artist)) return false;
-        if (!isTBD && !isNaN(relDate) && relDate.getFullYear() <= 2024 && !isExc) return false;
-
-        const released = (!isTBD && !isNaN(relDate) && relDate <= today);
-        if (currentMode === 'released' && !released) return false;
-        if (currentMode === 'unreleased' && released) return false;
-
+        const isReleased = (!isTBD && !isNaN(relDate) && relDate <= today);
+        if (currentMode === 'released' && !isReleased) return false;
+        if (currentMode === 'unreleased' && isReleased) return false;
         return currentFilter ? artist === currentFilter : true;
     });
 
-    let headers = `<thead><tr><th class="sticky-song">Song</th><th>Artist</th><th>1st Tease</th><th>Rel Date</th>`;
-    if (currentMode === 'released') {
-        headers += `<th class="heat-cell">Pre-Rel</th><th class="heat-cell">1st Wk</th><th class="heat-cell">Post-Rel</th><th>Current</th><th class="heat-cell">Avg Wk</th><th class="heat-cell">Total Posts</th><th class="heat-cell">Total UGC</th></tr></thead>`;
-    } else {
-        headers += `<th class="heat-cell">Pre-Rel Posts</th><th class="heat-cell">Total Posts</th><th class="heat-cell">Total UGC</th></tr></thead>`;
-    }
+    // Added explicit widths to column headers to ensure they don't squash
+    let head = `<thead><tr>
+        <th class="sticky-song">SONG</th>
+        <th style="width:140px">ARTIST</th>
+        <th style="width:90px">1ST TEASE</th>
+        <th style="width:90px">REL DATE</th>
+        <th style="width:90px">PRE-REL POSTS</th>
+        <th style="width:100px">1ST WK STR</th>
+        <th style="width:100px">POST-REL POSTS</th>
+        <th style="width:120px">CURR STREAMS</th>
+        <th style="width:110px">AVG WK STR</th>
+        <th style="width:110px">TOTAL POSTS</th>
+        <th style="width:100px">TOTAL UGC</th>
+    </tr></thead>`;
 
     let body = `<tbody>`;
     songs.forEach(r => {
-        const artistSongs = songs.filter(s => s[0] === r[0]);
-        const ugcMin = Math.min(...songs.map(s => n(s[36])));
-        const ugcMax = Math.max(...songs.map(s => n(s[36])));
+        // Source column E (Index 4) is Date Updated
+        const updateDate = r[4] || "N/A";
 
         body += `<tr>
             <td class="sticky-song" title="${r[1]}">${r[1]}</td>
             <td>${r[0]}</td>
-            <td style="font-size:0.7rem;">${r[2] || '-'}</td>
-            <td style="color:var(--gold); font-weight:bold;">${r[3] || 'TBD'}</td>`;
-        
-        if (currentMode === 'released') {
-            body += `
-                <td class="heat-cell" style="${getFixedHeat(r[40], 20, 10)}">${r[40] || '0'}</td>
-                <td class="heat-cell" style="${getRelativeHeat(r[6], 0, 100000)}">${r[6] || '0'}</td>
-                <td class="heat-cell" style="${getFixedHeat(r[41], 20, 15)}">${r[41] || '0'}</td>
-                <td class="stream-cell" title="Date Updated: ${r[4] || 'N/A'}">${r[7] || '0'}</td>
-                <td class="heat-cell" style="${getRelativeHeat(r[9], 0, 50000)}">${r[9] || '0'}</td>
-                <td class="heat-cell" style="${getFixedHeat(r[42], 40, 20)}">${r[42] || '0'}</td>
-                <td class="heat-cell" style="${getRelativeHeat(r[36], ugcMin, ugcMax)}">${r[36] || '0'}</td>`;
-        } else {
-            body += `
-                <td class="heat-cell" style="${getFixedHeat(r[40], 20, 10)}">${r[40] || '0'}</td>
-                <td class="heat-cell" style="${getFixedHeat(r[42], 40, 20)}">${r[42] || '0'}</td>
-                <td class="heat-cell" style="${getRelativeHeat(r[36], ugcMin, ugcMax)}">${r[36] || '0'}</td>`;
-        }
-        body += `</tr>`;
+            <td>${r[2] || '-'}</td>
+            <td style="color:var(--gold); font-weight:bold;">${r[3] || 'TBD'}</td>
+            <td class="heat-cell" style="${getHeat(r[40], 0, 30)}">${r[40] || '0'}</td>
+            <td class="heat-cell" style="${getHeat(r[6], 0, 1000000)}">${r[6] || '0'}</td>
+            <td class="heat-cell" style="${getHeat(r[41], 0, 30)}">${r[41] || '0'}</td>
+            <td class="stream-cell" title="Last Updated: ${updateDate}">${r[7] || '0'}</td>
+            <td class="heat-cell" style="${getHeat(r[9], 0, 500000)}">${r[9] || '0'}</td>
+            <td class="heat-cell" style="${getHeat(r[42], 0, 50)}">${r[42] || '0'}</td>
+            <td class="heat-cell" style="${getHeat(r[36], 0, 50000)}">${r[36] || '0'}</td>
+        </tr>`;
     });
-    document.getElementById('table-output').innerHTML = `<table>${headers}${body}</tbody></table>`;
+    document.getElementById('table-output').innerHTML = `<table>${head}${body}</tbody></table>`;
 }
 
 Papa.parse(MASTER_CSV, {
