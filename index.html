@@ -13,7 +13,6 @@
         }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
         aside { width: 260px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 30px 20px; display: flex; flex-direction: column; flex-shrink: 0; }
         .brand-logo { cursor: pointer; font-size: 1.4rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 2px solid #a17d3a; padding-bottom: 15px; margin-bottom: 25px; }
         .nav-scroll { flex: 1; overflow-y: auto; margin-bottom: 20px; }
@@ -22,14 +21,149 @@
         li:hover { color: #fff; background: #1a1a1a; }
         li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
         
-        /* Sync Status */
         .status-box { padding-top: 15px; border-top: 1px solid var(--border); font-size: 0.7rem; color: var(--muted); }
         .pulse { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 8px; animation: pulse-animation 2s infinite; }
         @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        /* Main Content */
         main { flex: 1; display: flex; flex-direction: column; background: #050505; min-width: 0; }
         .header { padding: 20px 40px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 20px; }
         
         .search-container { display: flex; align-items: center; gap: 15px; }
-        #global-search { background:#1a1a1a; border:1px
+        #global-search { background:#1a1a1a; border:1px solid var(--gold); color:#fff; padding:12px 18px; border-radius:6px; outline:none; width: 280px; font-size: 0.9rem; }
+
+        .content { padding: 20px 40px; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
+        .table-wrapper { width: 100%; overflow: auto; border: 1px solid var(--border); background: #0a0a0a; border-radius: 8px; }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1750px; }
+        th { text-align: left; padding: 15px; color: var(--gold); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; position: sticky; top: 0; background: #050505; z-index: 20; border-bottom: 2px solid var(--border); }
+        td { padding: 15px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        
+        .sticky-col { position: sticky; left: 0; z-index: 10; background: #0f0f0f !important; border-right: 2px solid var(--border); }
+        .col-stat { width: 110px; text-align: center; font-weight: bold; }
+        .heat-cell { color: #000 !important; }
+        
+        .stream-cell { cursor: pointer; color: var(--gold); font-weight: bold; text-decoration: underline dotted; position: relative; }
+        .stream-cell:hover::after {
+            content: "Updated: " attr(data-updated);
+            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+            background: #fff; color: #000; padding: 8px 12px; border-radius: 6px;
+            font-size: 11px; font-weight: 800; z-index: 100; white-space: nowrap;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); border: 1px solid var(--gold);
+        }
+    </style>
+</head>
+<body>
+
+<aside>
+    <div class="brand-logo" onclick="location.reload()">THE CORE</div>
+    <div class="nav-scroll"><ul id="artist-list"></ul></div>
+    <div class="status-box">
+        <span class="pulse"></span><span id="sync-time">Connecting to Sheets...</span>
+    </div>
+</aside>
+
+<main>
+    <div class="header">
+        <h2 id="view-title" style="margin:0; font-size: 1.4rem; font-weight: 800;">Priority Tracks</h2>
+        <div class="search-container">
+            <input type="text" id="global-search" placeholder="Search song title...">
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="table-wrapper">
+            <div id="table-output"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+// MAKE SURE THIS URL IS STILL THE "PUBLISHED" CSV URL
+const MASTER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp-yQVU_VNNOR5aXQ7m-Xv7BiAgYKjBfJuT6lIETy6ksjqR-Lj2WW4DNqYGCNX2rfCpUtemiS1shes/pub?gid=2070907343&single=true&output=csv';
+
+let allMasterData = [];
+let currentArtistFilter = null;
+
+const PRIORITY_ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wisham", "Cameron Whitcomb", "Dan + Shay", "Danielle Bradbery", "Dax", "Deltona", "Hannah McFarland", "Josh Ross", "Just Jayne", "Nate Smith"];
+
+function renderTable() {
+    const search = document.getElementById('global-search').value.toLowerCase();
+    
+    let filtered = allMasterData.filter(row => {
+        const artist = (row[0] || "").trim();
+        if (!PRIORITY_ARTISTS.includes(artist)) return false;
+
+        const artistMatch = currentArtistFilter ? artist === currentArtistFilter : true;
+        const searchMatch = (row[1] || "").toLowerCase().includes(search);
+        return artistMatch && searchMatch;
+    });
+
+    if (filtered.length === 0) {
+        document.getElementById('table-output').innerHTML = "<div style='padding:40px; color:var(--gold);'>No songs found. Check your Google Sheet dates and artist names.</div>";
+        return;
+    }
+
+    // Dynamic Heat Scales
+    const ugcStats = { min: Math.min(...filtered.map(r => parseFloat(r[36]) || 0)), max: Math.max(...filtered.map(r => parseFloat(r[36]) || 0)) };
+
+    let html = `<table><thead><tr>
+        <th class="sticky-col">Song Name</th><th>Artist</th><th>1st Tease</th>
+        <th class="col-stat">Pre-Rel Posts</th><th>Rel Date</th>
+        <th>1st Wk Str</th><th class="col-stat">Current Str</th><th>Avg Wk Str</th>
+        <th class="col-stat">Post-Rel Posts</th><th class="col-stat">Total Posts</th>
+        <th class="col-stat">Avg Views</th><th class="col-stat">Total UGC</th><th class="col-stat">UGC Views</th>
+    </tr></thead><tbody>`;
+
+    filtered.forEach(row => {
+        html += `<tr>
+            <td class="sticky-col" style="font-weight:bold;">${row[1] || '-'}</td>
+            <td style="color:#aaa; font-size:11px;">${row[0] || '-'}</td>
+            <td>${row[2] || '-'}</td>
+            <td style="background:#444; color:#fff; text-align:center;">${row[40] || '0'}</td>
+            <td style="color:var(--gold); font-weight:bold;">${row[3] || '-'}</td>
+            <td>${row[6] || '-'}</td>
+            <td class="stream-cell" data-updated="${row[4] || 'N/A'}">${row[7] || '-'}</td>
+            <td>${row[9] || '-'}</td>
+            <td style="background:#333; color:#fff; text-align:center;">${row[41] || '0'}</td>
+            <td style="background:#222; color:#fff; text-align:center;">${row[42] || '0'}</td>
+            <td>${row[11] || '-'}</td>
+            <td>${row[36] || '-'}</td>
+            <td>${row[37] || '-'}</td>
+        </tr>`;
+    });
+
+    document.getElementById('table-output').innerHTML = html + `</tbody></table>`;
+}
+
+function init() {
+    Papa.parse(MASTER_CSV_URL, {
+        download: true, header: false,
+        complete: (results) => {
+            console.log("Data Received:", results.data); // Debug check
+            allMasterData = results.data.filter(r => r[0] && r[0] !== "ARTIST");
+            
+            const list = document.getElementById('artist-list');
+            PRIORITY_ARTISTS.sort().forEach(name => {
+                const li = document.createElement('li');
+                li.innerText = name;
+                li.onclick = () => {
+                    document.querySelectorAll('li').forEach(el => el.classList.remove('active'));
+                    li.classList.add('active');
+                    currentArtistFilter = name;
+                    renderTable();
+                };
+                list.appendChild(li);
+            });
+            renderTable();
+            document.getElementById('sync-time').innerText = "Live: " + new Date().toLocaleTimeString();
+        },
+        error: (err) => {
+            document.getElementById('sync-time').innerText = "Error Loading Sheet";
+        }
+    });
+    document.getElementById('global-search').addEventListener('input', renderTable);
+}
+init();
+</script>
+</body>
+</html>
