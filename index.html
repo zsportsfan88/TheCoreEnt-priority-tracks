@@ -11,55 +11,56 @@
         }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        aside { width: 200px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 25px 15px; display: flex; flex-direction: column; flex-shrink: 0; }
+        aside { width: 180px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 25px 10px; display: flex; flex-direction: column; flex-shrink: 0; }
         .brand-logo { cursor: pointer; font-size: 1.1rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 2px solid #a17d3a; padding-bottom: 15px; margin-bottom: 25px; text-align: center; }
         .nav-scroll { flex: 1; overflow-y: auto; }
         ul { list-style: none; padding: 0; }
-        li { padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; color: var(--muted); transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        li { padding: 8px 10px; cursor: pointer; border-radius: 4px; font-size: 0.75rem; color: var(--muted); transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         li:hover { color: #fff; background: #1a1a1a; }
         li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
         
         main { flex: 1; display: flex; flex-direction: column; background: #050505; min-width: 0; }
-        .header { padding: 20px 40px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-        #search-bar { background: #111; border: 1px solid var(--gold); color: #fff; padding: 10px 15px; border-radius: 6px; width: 220px; outline: none; }
+        .header { padding: 15px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        #search-bar { background: #111; border: 1px solid var(--gold); color: #fff; padding: 8px 12px; border-radius: 6px; width: 200px; outline: none; }
         
         .toggle-container { display: flex; background: #111; padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
-        .toggle-btn { padding: 8px 16px; border: none; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
+        .toggle-btn { padding: 6px 14px; border: none; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
         .toggle-btn.active { background: var(--gold-grad); color: #000; }
 
-        .content { padding: 20px 40px; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
+        .content { padding: 20px 30px; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
         .table-wrapper { width: 100%; overflow: auto; border: 1px solid var(--border); background: #0a0a0a; border-radius: 8px; position: relative; }
         
-        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        table { width: auto; border-collapse: separate; border-spacing: 0; }
         
-        th { position: sticky; top: 0; z-index: 30; background: #050505; color: var(--gold) !important; padding: 15px; font-size: 0.65rem; text-transform: uppercase; border-bottom: 2px solid var(--border); text-align: left; }
+        /* Fixed Header visibility */
+        th { 
+            position: sticky; top: 0; z-index: 30; 
+            background: #050505; color: var(--gold) !important; 
+            padding: 12px 15px; font-size: 0.65rem; text-transform: uppercase; 
+            border-bottom: 2px solid var(--border); text-align: left;
+            white-space: nowrap;
+        }
         
-        .sticky-song { position: sticky; left: 0; z-index: 40; width: 220px; min-width: 220px; background: #0f0f0f !important; border-right: 2px solid var(--border); font-weight: bold; }
+        .sticky-song { position: sticky; left: 0; z-index: 40; min-width: 180px; background: #0f0f0f !important; border-right: 2px solid var(--border); font-weight: bold; }
         thead th.sticky-song { z-index: 50; top: 0; }
 
-        td { padding: 15px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: #fff; }
+        td { padding: 12px 15px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: #fff; white-space: nowrap; }
         .heat-cell { color: #000 !important; font-weight: bold; text-align: center; }
 
         .stream-cell { color: var(--gold); font-weight: bold; cursor: help; position: relative; }
-        .stream-cell:hover::after {
-            content: "Last Update: " attr(data-update);
-            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-            background: #fff; color: #000; padding: 6px 10px; border-radius: 4px;
-            font-size: 11px; white-space: nowrap; z-index: 1000; border: 1px solid var(--gold);
-        }
     </style>
 </head>
 <body>
 
 <aside>
     <div class="brand-logo" onclick="location.reload()">THE CORE</div>
-    <div class="nav-scroll"><ul id="artist-list"></ul></div>
+    <div class="nav-scroll"><ul id="artist-list"></ul><li onclick="clearFilter()" style="margin-top:10px; color:var(--gold)">Show All</li></div>
 </aside>
 
 <main>
     <div class="header">
-        <h2 id="view-title" style="margin:0;">Priority Tracks</h2>
-        <div style="display:flex; gap:20px; align-items:center;">
+        <h2 id="view-title" style="margin:0; font-size: 1.2rem;">Priority Tracks</h2>
+        <div style="display:flex; gap:15px; align-items:center;">
             <input type="text" id="search-bar" placeholder="Search song..." oninput="renderTable()">
             <div class="toggle-container">
                 <button id="btn-released" class="toggle-btn active" onclick="setMode('released')">RELEASED</button>
@@ -90,8 +91,15 @@ function setMode(mode) {
     renderTable();
 }
 
+function clearFilter() {
+    currentArtistFilter = null;
+    document.getElementById('view-title').innerText = "Priority Tracks";
+    document.querySelectorAll('li').forEach(el => el.classList.remove('active'));
+    renderTable();
+}
+
 function getTeaseHeat(teaseDateStr, relDateStr) {
-    if (!teaseDateStr || !relDateStr || relDateStr.toLowerCase().includes('tbd')) return 'background: #fff;';
+    if (!teaseDateStr || !relDateStr || relDateStr.toLowerCase().includes('undecided') || relDateStr.toLowerCase().includes('tbd')) return 'background: #fff;';
     const t = new Date(teaseDateStr);
     const r = new Date(relDateStr);
     if (isNaN(t) || isNaN(r)) return 'background: #fff;';
@@ -130,17 +138,18 @@ function renderTable() {
         const song = (row[1] || "").trim();
         const dateStr = (row[3] || "").trim();
         const relDate = new Date(dateStr);
-        const isLegacyException = LEGACY_EXCEPTIONS.some(ex => song.includes(ex));
+        const isTBD = dateStr.toLowerCase().includes('tbd') || dateStr.toLowerCase().includes('undecided') || dateStr === "";
+        const isLegacyException = LEGACY_EXCEPTIONS.some(ex => song.toLowerCase().includes(ex.toLowerCase()));
 
-        // 1. Year Filter: Ignore everything 2024 or older UNLESS it's an exception
-        const releaseYear = relDate.getFullYear();
-        if (!isNaN(releaseYear) && releaseYear <= 2024 && !isLegacyException) return false;
+        // YEAR FILTER Logic
+        if (!isTBD && !isNaN(relDate)) {
+            const releaseYear = relDate.getFullYear();
+            if (releaseYear <= 2024 && !isLegacyException) return false;
+        }
 
-        // 2. Roster and Basic Filters
         if (!PRIORITY_ARTISTS.includes(artist)) return false;
 
-        // 3. Mode Toggles
-        const isTBD = dateStr.toLowerCase().includes('tbd') || dateStr === "";
+        // TAB Logic
         if (currentMode === 'released') {
             if (isTBD || isNaN(relDate) || relDate > today) return false;
         } else {
@@ -150,14 +159,11 @@ function renderTable() {
         return (currentArtistFilter ? artist === currentArtistFilter : true) && song.toLowerCase().includes(searchTerm);
     });
 
-    const globalUGC = { 
-        min: Math.min(...visibleSongs.map(r => parseNum(r[36]))), 
-        max: Math.max(...visibleSongs.map(r => parseNum(r[36]))) 
-    };
+    const globalUGC = { min: Math.min(...visibleSongs.map(r => parseNum(r[36]))), max: Math.max(...visibleSongs.map(r => parseNum(r[36]))) };
 
-    let headers = `<tr><th class="sticky-song">Song</th><th>Artist</th><th class="heat-cell">1st Tease</th><th>Release Date</th>`;
+    let headers = `<tr><th class="sticky-song">Song</th><th>Artist</th><th class="heat-cell">1st Tease</th><th>Rel Date</th>`;
     if (currentMode === 'released') {
-        headers += `<th class="heat-cell">Pre-Rel Posts</th><th class="heat-cell">1st Wk Str</th><th class="heat-cell">Post-Rel Posts</th><th>Current Streams</th><th class="heat-cell">Avg Weekly Str</th><th class="heat-cell">Total Posts</th><th class="heat-cell">Total UGC</th></tr>`;
+        headers += `<th class="heat-cell">Pre-Rel Posts</th><th class="heat-cell">1st Wk Str</th><th class="heat-cell">Post-Rel Posts</th><th>Curr Streams</th><th class="heat-cell">Avg Wk Str</th><th class="heat-cell">Total Posts</th><th class="heat-cell">Total UGC</th></tr>`;
     } else {
         headers += `<th class="heat-cell">Pre-Rel Posts</th><th class="heat-cell">Total Posts</th><th class="heat-cell">Total UGC</th></tr>`;
     }
@@ -165,7 +171,7 @@ function renderTable() {
     let html = `<table><thead>${headers}</thead><tbody>`;
 
     visibleSongs.forEach(row => {
-        const artistVisible = visibleSongs.filter(r => (r[0] || "").trim() === (row[0] || "").trim());
+        const artistVisible = visibleSongs.filter(r => r[0] === row[0]);
         const artist1stWk = { min: Math.min(...artistVisible.map(r => parseNum(r[6]))), max: Math.max(...artistVisible.map(r => parseNum(r[6]))) };
         const artistAvgWk = { min: Math.min(...artistVisible.map(r => parseNum(r[9]))), max: Math.max(...artistVisible.map(r => parseNum(r[9]))) };
 
@@ -176,7 +182,7 @@ function renderTable() {
                 <td class="heat-cell" style="${getFixedHeat(row[40], 20, 10)}">${row[40] || '0'}</td>
                 <td class="heat-cell" style="${getRelativeHeat(row[6], artist1stWk.min, artist1stWk.max)}">${row[6] || '0'}</td>
                 <td class="heat-cell" style="${getFixedHeat(row[41], 20, 15)}">${row[41] || '0'}</td>
-                <td class="stream-cell" data-update="${row[4] || 'N/A'}">${row[7] || '0'}</td>
+                <td class="stream-cell">${row[7] || '0'}</td>
                 <td class="heat-cell" style="${getRelativeHeat(row[9], artistAvgWk.min, artistAvgWk.max)}">${row[9] || '0'}</td>
                 <td class="heat-cell" style="${getFixedHeat(row[42], 40, 20)}">${row[42] || '0'}</td>
                 <td class="heat-cell" style="${getRelativeHeat(row[36], globalUGC.min, globalUGC.max)}">${row[36] || '0'}</td>`;
