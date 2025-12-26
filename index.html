@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Core Entertainment - Priority Tracks Dashboard</title>
+    <title>The Core Entertainment - Priority Tracks</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { 
             --gold: #C5A059; 
             --gold-grad: linear-gradient(145deg, #f3d082, #a17d3a);
             --bg: #000; --sidebar: #0f0f0f; --border: #222; --text: #fff; --muted: #888; 
-            --green: #1DB954; --red: #ff4444;
         }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
@@ -29,14 +28,13 @@
         .toggle-btn.active { background: var(--gold-grad); color: #000; }
 
         .content { padding: 20px 40px; overflow-y: auto; flex: 1; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 1800px; table-layout: fixed; }
-        th { text-align: left; padding: 12px; color: var(--gold); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 0; background: #050505; z-index: 10; line-height: 1.2; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 1700px; table-layout: fixed; }
+        th { text-align: left; padding: 12px; color: var(--gold); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 0; background: #050505; z-index: 10; line-height: 1.2; }
         td { padding: 12px; background: #0f0f0f; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
         .col-song { width: 220px; }
         .col-artist { width: 140px; }
-        .col-stat { width: 90px; text-align: center; font-weight: bold; }
-
+        .col-stat { width: 100px; text-align: center; font-weight: bold; }
         .heat-cell { color: #000 !important; border-radius: 2px; }
         
         /* Tooltip for Current Streams */
@@ -44,7 +42,7 @@
         .stream-cell:hover::after {
             content: attr(data-updated);
             position: absolute; left: 0; top: -30px; background: var(--gold-grad); color: #000;
-            padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 900; z-index: 100;
+            padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 900; z-index: 100; white-space: nowrap;
         }
     </style>
 </head>
@@ -58,12 +56,12 @@
 
 <main>
     <div class="header">
-        <h2 id="view-title" style="margin:0; font-size: 1.2rem; letter-spacing: 1px;">Priority Tracks Dashboard</h2>
+        <h2 id="view-title" style="margin:0; font-size: 1.2rem;">Priority Tracks Dashboard</h2>
         <div class="toggle-container">
             <button id="btn-released" class="toggle-btn active" onclick="setMode('released')">RELEASED</button>
             <button id="btn-unreleased" class="toggle-btn" onclick="setMode('unreleased')">UNRELEASED</button>
         </div>
-        <input type="text" id="global-search" class="search-bar" placeholder="Search tracks..." style="background:#111; border:1px solid #222; color:#fff; padding:8px 15px; border-radius:4px; outline:none; width: 200px;">
+        <input type="text" id="global-search" placeholder="Search tracks..." style="background:#111; border:1px solid #222; color:#fff; padding:8px 15px; border-radius:4px; outline:none; width: 200px;">
     </div>
     <div class="content"><div id="table-output"></div></div>
 </main>
@@ -75,7 +73,6 @@ let allMasterData = [];
 let currentArtistFilter = null;
 let currentMode = 'released';
 
-// Priority List from Screenshots
 const PRIORITY_ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wisham", "Cameron Whitcomb", "Dan + Shay", "Danielle Bradbery", "Dax", "Deltona", "Hannah McFarland", "Josh Ross", "Just Jayne", "Nate Smith"];
 
 function setMode(mode) {
@@ -92,15 +89,14 @@ function clearFilter() {
     renderTable();
 }
 
-// Color Scale Logic
 function getHeat(val, type, min, max) {
     let n = parseFloat(val) || 0;
-    if (type === 'AO') { // Pre-Release
+    if (type === 'PRE') { // Artist Pre-Release
         if (n >= 20) return 'background:#1DB954;';
         if (n <= 10) return 'background:#ff4444;';
         return 'background:#C5A059;';
     }
-    if (type === 'AQ') { // Total Posts
+    if (type === 'TOTAL') { // Total Posts
         if (n >= 40) return 'background:#1DB954;';
         if (n < 20) return 'background:#ff4444;';
         return 'background:#C5A059;';
@@ -121,17 +117,12 @@ function renderTable() {
         const releaseStr = row[3] || "";
         const releaseDate = new Date(releaseStr);
 
-        // 1. Remove non-priority artists (Hurd, Clever)
         if (!PRIORITY_ARTISTS.includes(artist)) return false;
-        
-        // 2. Hide errors and ensure date exists
-        if (row[32]?.includes("#DIV/0") || !releaseStr || releaseStr.toLowerCase().includes("tbd")) return false;
+        if (!releaseStr || releaseStr.toLowerCase().includes("tbd")) return false;
 
-        // 3. 2025/26 Filter Logic
-        const year = releaseDate.getFullYear();
-        if (year < 2025) return false;
+        // Strict 2025/2026 Filter
+        if (releaseDate.getFullYear() < 2025) return false;
 
-        // 4. Mode Filter
         if (currentMode === 'released' && releaseDate > today) return false;
         if (currentMode === 'unreleased' && releaseDate <= today) return false;
 
@@ -140,12 +131,8 @@ function renderTable() {
         return artistMatch && searchMatch;
     });
 
-    // Stats for dynamic scaling (UGC/Artist-specific views)
-    const getGlobalStats = (idx) => {
-        const vals = filtered.map(r => parseFloat(r[idx]) || 0);
-        return { min: Math.min(...vals), max: Math.max(...vals) };
-    };
-    const ugcStats = getGlobalStats(36), ugcViewStats = getGlobalStats(37);
+    const ugcStats = { min: Math.min(...filtered.map(r => parseFloat(r[36]) || 0)), max: Math.max(...filtered.map(r => parseFloat(r[36]) || 0)) };
+    const ugcViewStats = { min: Math.min(...filtered.map(r => parseFloat(r[37]) || 0)), max: Math.max(...filtered.map(r => parseFloat(r[37]) || 0)) };
 
     let html = `<table><thead><tr>
         <th class="col-song">Song</th><th class="col-artist">Artist</th><th>1st Song Tease</th>
@@ -156,22 +143,23 @@ function renderTable() {
     </tr></thead><tbody>`;
 
     filtered.forEach(row => {
-        // Artist-specific Scaling for Views (Column 11)
         const artistSongs = filtered.filter(r => r[0] === row[0]);
-        const viewVals = artistSongs.map(r => parseFloat(r[11]) || 0);
-        const viewStats = { min: Math.min(...viewVals), max: Math.max(...viewVals) };
+        const viewStats = { 
+            min: Math.min(...artistSongs.map(r => parseFloat(r[11]) || 0)), 
+            max: Math.max(...artistSongs.map(r => parseFloat(r[11]) || 0)) 
+        };
 
         html += `<tr>
             <td title="${row[1]}" style="font-weight:bold;">${row[1]}</td>
             <td style="color:#aaa; font-size:11px;">${row[0]}</td>
             <td>${row[2] || '-'}</td>
-            <td class="heat-cell" style="${getHeat(row[40], 'AO')}">${row[40] || '0'}</td>
+            <td class="heat-cell" style="${getHeat(row[40], 'PRE')}">${row[40] || '0'}</td>
             <td style="color:var(--gold); font-weight:bold;">${row[3]}</td>
             <td>${row[6] || '-'}</td>
             <td class="stream-cell" data-updated="Updated: ${row[4] || 'N/A'}">${row[7] || '-'}</td>
             <td>${row[9] || '-'}</td>
-            <td class="heat-cell" style="${getHeat(row[41], 'AQ')}">${row[41] || '0'}</td>
-            <td class="heat-cell" style="${getHeat(row[42], 'AQ')}">${row[42] || '0'}</td>
+            <td class="heat-cell" style="${getHeat(row[41], 'TOTAL')}">${row[41] || '0'}</td>
+            <td class="heat-cell" style="${getHeat(row[42], 'TOTAL')}">${row[42] || '0'}</td>
             <td class="heat-cell" style="${getHeat(row[11], 'VIEW', viewStats.min, viewStats.max)}">${row[11] || '-'}</td>
             <td class="heat-cell" style="${getHeat(row[36], 'UGC', ugcStats.min, ugcStats.max)}">${row[36] || '-'}</td>
             <td class="heat-cell" style="${getHeat(row[37], 'UGC', ugcViewStats.min, ugcViewStats.max)}">${row[37] || '-'}</td>
@@ -187,7 +175,7 @@ function init() {
         complete: (results) => {
             allMasterData = results.data.filter(r => r[0] && r[0] !== "ARTIST");
             const list = document.getElementById('artist-list');
-            PRIORITY_ARTISTS.forEach(name => {
+            PRIORITY_ARTISTS.sort().forEach(name => {
                 const li = document.createElement('li');
                 li.innerText = name;
                 li.onclick = () => {
