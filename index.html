@@ -9,190 +9,27 @@
             --gold: #C5A059; 
             --gold-grad: linear-gradient(145deg, #f3d082, #a17d3a);
             --bg: #000; --sidebar: #0f0f0f; --border: #222; --text: #fff; --muted: #888; 
+            --green: #1DB954;
         }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        aside { width: 280px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 30px 20px; display: flex; flex-direction: column; }
+        /* Sidebar */
+        aside { width: 260px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 30px 20px; display: flex; flex-direction: column; flex-shrink: 0; }
         .brand-logo { cursor: pointer; font-size: 1.4rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 2px solid #a17d3a; padding-bottom: 15px; margin-bottom: 25px; }
-        .nav-scroll { flex: 1; overflow-y: auto; }
+        .nav-scroll { flex: 1; overflow-y: auto; margin-bottom: 20px; }
         ul { list-style: none; padding: 0; }
         li { padding: 10px 15px; cursor: pointer; border-radius: 4px; font-size: 0.85rem; color: var(--muted); transition: 0.2s; }
         li:hover { color: #fff; background: #1a1a1a; }
         li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
-        .show-all-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--gold); color: var(--gold); border-radius: 4px; cursor: pointer; margin-top: 15px; font-weight: bold; text-transform: uppercase; }
-
-        main { flex: 1; display: flex; flex-direction: column; background: #050505; }
-        .header { padding: 20px 40px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .toggle-container { display: flex; background: #111; padding: 4px; border-radius: 8px; }
-        .toggle-btn { padding: 8px 20px; border: none; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
-        .toggle-btn.active { background: var(--gold-grad); color: #000; }
-
-        .content { padding: 20px 40px; overflow-y: auto; flex: 1; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 1700px; table-layout: fixed; }
-        th { text-align: left; padding: 12px; color: var(--gold); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 0; background: #050505; z-index: 10; line-height: 1.2; }
-        td { padding: 12px; background: #0f0f0f; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        .col-song { width: 220px; }
-        .col-artist { width: 140px; }
-        .col-stat { width: 100px; text-align: center; font-weight: bold; }
-        .heat-cell { color: #000 !important; border-radius: 2px; }
+        /* Sync Status */
+        .status-box { padding-top: 15px; border-top: 1px solid var(--border); font-size: 0.7rem; color: var(--muted); }
+        .pulse { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 8px; animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* Main Content */
+        main { flex: 1; display: flex; flex-direction: column; background: #050505; min-width: 0; }
+        .header { padding: 20px 40px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 20px; }
         
-        /* Tooltip for Current Streams */
-        .stream-cell { position: relative; cursor: help; color: var(--gold); font-weight: bold; }
-        .stream-cell:hover::after {
-            content: attr(data-updated);
-            position: absolute; left: 0; top: -30px; background: var(--gold-grad); color: #000;
-            padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 900; z-index: 100; white-space: nowrap;
-        }
-    </style>
-</head>
-<body>
-
-<aside>
-    <div class="brand-logo" onclick="clearFilter()">THE CORE</div>
-    <div class="nav-scroll"><ul id="artist-list"></ul></div>
-    <button class="show-all-btn" onclick="clearFilter()">Show All Roster</button>
-</aside>
-
-<main>
-    <div class="header">
-        <h2 id="view-title" style="margin:0; font-size: 1.2rem;">Priority Tracks Dashboard</h2>
-        <div class="toggle-container">
-            <button id="btn-released" class="toggle-btn active" onclick="setMode('released')">RELEASED</button>
-            <button id="btn-unreleased" class="toggle-btn" onclick="setMode('unreleased')">UNRELEASED</button>
-        </div>
-        <input type="text" id="global-search" placeholder="Search tracks..." style="background:#111; border:1px solid #222; color:#fff; padding:8px 15px; border-radius:4px; outline:none; width: 200px;">
-    </div>
-    <div class="content"><div id="table-output"></div></div>
-</main>
-
-<script>
-const MASTER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp-yQVU_VNNOR5aXQ7m-Xv7BiAgYKjBfJuT6lIETy6ksjqR-Lj2WW4DNqYGCNX2rfCpUtemiS1shes/pub?gid=2070907343&single=true&output=csv';
-
-let allMasterData = [];
-let currentArtistFilter = null;
-let currentMode = 'released';
-
-const PRIORITY_ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wisham", "Cameron Whitcomb", "Dan + Shay", "Danielle Bradbery", "Dax", "Deltona", "Hannah McFarland", "Josh Ross", "Just Jayne", "Nate Smith"];
-
-function setMode(mode) {
-    currentMode = mode;
-    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('btn-' + mode).classList.add('active');
-    renderTable();
-}
-
-function clearFilter() {
-    currentArtistFilter = null;
-    document.querySelectorAll('li').forEach(l => l.classList.remove('active'));
-    document.getElementById('view-title').innerText = "Priority Tracks Dashboard";
-    renderTable();
-}
-
-function getHeat(val, type, min, max) {
-    let n = parseFloat(val) || 0;
-    if (type === 'PRE') { // Artist Pre-Release
-        if (n >= 20) return 'background:#1DB954;';
-        if (n <= 10) return 'background:#ff4444;';
-        return 'background:#C5A059;';
-    }
-    if (type === 'TOTAL') { // Total Posts
-        if (n >= 40) return 'background:#1DB954;';
-        if (n < 20) return 'background:#ff4444;';
-        return 'background:#C5A059;';
-    }
-    // Dynamic Scale for Views/UGC
-    const ratio = (n - min) / (max - min || 1);
-    const r = ratio < 0.5 ? 255 : Math.floor(255 - (ratio - 0.5) * 2 * 255);
-    const g = ratio > 0.5 ? 255 : Math.floor(ratio * 2 * 255);
-    return `background: rgb(${r},${g},100);`;
-}
-
-function renderTable() {
-    const search = document.getElementById('global-search').value.toLowerCase();
-    const today = new Date();
-
-    let filtered = allMasterData.filter(row => {
-        const artist = row[0];
-        const releaseStr = row[3] || "";
-        const releaseDate = new Date(releaseStr);
-
-        if (!PRIORITY_ARTISTS.includes(artist)) return false;
-        if (!releaseStr || releaseStr.toLowerCase().includes("tbd")) return false;
-
-        // Strict 2025/2026 Filter
-        if (releaseDate.getFullYear() < 2025) return false;
-
-        if (currentMode === 'released' && releaseDate > today) return false;
-        if (currentMode === 'unreleased' && releaseDate <= today) return false;
-
-        const artistMatch = currentArtistFilter ? artist === currentArtistFilter : true;
-        const searchMatch = row[1].toLowerCase().includes(search);
-        return artistMatch && searchMatch;
-    });
-
-    const ugcStats = { min: Math.min(...filtered.map(r => parseFloat(r[36]) || 0)), max: Math.max(...filtered.map(r => parseFloat(r[36]) || 0)) };
-    const ugcViewStats = { min: Math.min(...filtered.map(r => parseFloat(r[37]) || 0)), max: Math.max(...filtered.map(r => parseFloat(r[37]) || 0)) };
-
-    let html = `<table><thead><tr>
-        <th class="col-song">Song</th><th class="col-artist">Artist</th><th>1st Song Tease</th>
-        <th class="col-stat">Artist Pre-Release Posts</th><th>Release Date</th>
-        <th>1st Wk Str</th><th class="col-stat">Current Streams</th><th>Avg Wk Str</th>
-        <th class="col-stat">Artist Post-Release Posts</th><th class="col-stat">Artists Total Posts</th>
-        <th class="col-stat">Avg Views Per Post</th><th class="col-stat">Total UGC</th><th class="col-stat">UGC Views</th>
-    </tr></thead><tbody>`;
-
-    filtered.forEach(row => {
-        const artistSongs = filtered.filter(r => r[0] === row[0]);
-        const viewStats = { 
-            min: Math.min(...artistSongs.map(r => parseFloat(r[11]) || 0)), 
-            max: Math.max(...artistSongs.map(r => parseFloat(r[11]) || 0)) 
-        };
-
-        html += `<tr>
-            <td title="${row[1]}" style="font-weight:bold;">${row[1]}</td>
-            <td style="color:#aaa; font-size:11px;">${row[0]}</td>
-            <td>${row[2] || '-'}</td>
-            <td class="heat-cell" style="${getHeat(row[40], 'PRE')}">${row[40] || '0'}</td>
-            <td style="color:var(--gold); font-weight:bold;">${row[3]}</td>
-            <td>${row[6] || '-'}</td>
-            <td class="stream-cell" data-updated="Updated: ${row[4] || 'N/A'}">${row[7] || '-'}</td>
-            <td>${row[9] || '-'}</td>
-            <td class="heat-cell" style="${getHeat(row[41], 'TOTAL')}">${row[41] || '0'}</td>
-            <td class="heat-cell" style="${getHeat(row[42], 'TOTAL')}">${row[42] || '0'}</td>
-            <td class="heat-cell" style="${getHeat(row[11], 'VIEW', viewStats.min, viewStats.max)}">${row[11] || '-'}</td>
-            <td class="heat-cell" style="${getHeat(row[36], 'UGC', ugcStats.min, ugcStats.max)}">${row[36] || '-'}</td>
-            <td class="heat-cell" style="${getHeat(row[37], 'UGC', ugcViewStats.min, ugcViewStats.max)}">${row[37] || '-'}</td>
-        </tr>`;
-    });
-
-    document.getElementById('table-output').innerHTML = html + `</tbody></table>`;
-}
-
-function init() {
-    Papa.parse(MASTER_CSV_URL, {
-        download: true, header: false,
-        complete: (results) => {
-            allMasterData = results.data.filter(r => r[0] && r[0] !== "ARTIST");
-            const list = document.getElementById('artist-list');
-            PRIORITY_ARTISTS.sort().forEach(name => {
-                const li = document.createElement('li');
-                li.innerText = name;
-                li.onclick = () => {
-                    document.querySelectorAll('li').forEach(el => el.classList.remove('active'));
-                    li.classList.add('active');
-                    currentArtistFilter = name;
-                    document.getElementById('view-title').innerText = name + " Priority Tracks";
-                    renderTable();
-                };
-                list.appendChild(li);
-            });
-            renderTable();
-        }
-    });
-    document.getElementById('global-search').oninput = renderTable;
-}
-init();
-</script>
-</body>
-</html>
+        .search-container { display: flex; align-items: center; gap: 15px; }
+        #global-search { background:#1a1a1a; border:1px
