@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Core - Priority Tracks V30</title>
+    <title>The Core - Priority Tracks V31</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --gold: #C5A059; --bg: #000; --border: #333; }
@@ -72,6 +72,7 @@
 
 <script>
 const MASTER_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp-yQVU_VNNOR5aXQ7m-Xv7BiAgYKjBfJuT6lIETy6ksjqR-Lj2WW4DNqYGCNX2rfCpUtemiS1shes/pub?gid=2070907343&single=true&output=csv';
+// Updated Artist List: Removed Clever and Ryan Hurd
 const ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wisham", "Cameron Whitcomb", "Dan + Shay", "Danielle Bradbery", "Dax", "Deltona", "Hannah McFarland", "Josh Ross", "Just Jayne", "Nate Smith"];
 
 let allData = [];
@@ -83,10 +84,10 @@ function clearFilter() { currentFilter = null; document.getElementById('view-tit
 
 const n = (v) => {
     if (!v) return 0;
-    // Clean strings like "10.5%" or "1,000"
     return parseFloat(String(v).replace(/[%,]/g,'')) || 0;
 };
 
+// Heat Map Logic
 function getHeat(val, min, max) {
     let num = n(val); 
     if (num === 0 && min === 0) return 'background: #222; color: #666 !important;';
@@ -100,6 +101,19 @@ function getHeat(val, min, max) {
         r = Math.floor(255 * (1 - f)); g = 255; b = Math.floor(255 * (1 - f));
     }
     return `background: rgb(${r},${g},${b});`;
+}
+
+// Logic for 1st Tease conditional formatting
+function getTeaseColor(teaseStr, relStr) {
+    const tDate = new Date(teaseStr);
+    const rDate = new Date(relStr);
+    if (isNaN(tDate) || isNaN(rDate)) return '';
+    
+    const diffDays = (rDate - tDate) / (1000 * 60 * 60 * 24);
+    
+    if (diffDays >= 20) return 'background: #1DB954; color: #000; font-weight: 900; text-align: center;'; // Green
+    if (diffDays < 10) return 'background: #ff4444; color: #000; font-weight: 900; text-align: center;';  // Red
+    return 'background: #fff; color: #000; font-weight: 900; text-align: center;'; // White
 }
 
 function render() {
@@ -136,7 +150,8 @@ function render() {
 
     let body = `<tbody>`;
     songs.forEach(r => {
-        body += `<tr><td class="sticky-song">${r[1]}</td><td>${r[0]}</td><td>${r[2] || '-'}</td><td style="color:var(--gold); font-weight:bold;">${r[3] || 'TBD'}</td>`;
+        const teaseStyle = getTeaseColor(r[2], r[3]);
+        body += `<tr><td class="sticky-song">${r[1]}</td><td>${r[0]}</td><td style="${teaseStyle}">${r[2] || '-'}</td><td style="color:var(--gold); font-weight:bold;">${r[3] || 'TBD'}</td>`;
         
         if (currentMode === 'released') {
             body += `
@@ -149,10 +164,8 @@ function render() {
                 <td class="heat-cell" style="${getHeat(r[42], 0, 80)}">${r[42] || '0'}</td>
                 <td class="heat-cell" style="${getHeat(r[36], 0, 50000)}">${r[36] || '0'}</td>`;
         } else {
-            // Mappings: Pre-Rel (40), Avg Views (33), Engagement (32), UGC (36)
             const engagement = r[32] || '0%';
             const views = r[33] || '0';
-            
             body += `
                 <td class="heat-cell" style="${getHeat(r[40], 0, 40)}">${r[40] || '0'}</td>
                 <td class="heat-cell" style="${getHeat(views, 0, 250000)}">${views}</td>
