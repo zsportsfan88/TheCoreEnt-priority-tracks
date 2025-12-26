@@ -11,8 +11,8 @@
         }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        aside { width: 180px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 25px 10px; display: flex; flex-direction: column; flex-shrink: 0; }
-        .brand-logo { cursor: pointer; font-size: 1.1rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 2px solid #a17d3a; padding-bottom: 15px; margin-bottom: 25px; text-align: center; }
+        aside { width: 160px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 25px 10px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .brand-logo { cursor: pointer; font-size: 1rem; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 2px solid #a17d3a; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
         .nav-scroll { flex: 1; overflow-y: auto; }
         ul { list-style: none; padding: 0; }
         li { padding: 8px 10px; cursor: pointer; border-radius: 4px; font-size: 0.75rem; color: var(--muted); transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -20,34 +20,42 @@
         li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
         
         main { flex: 1; display: flex; flex-direction: column; background: #050505; min-width: 0; }
-        .header { padding: 15px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-        #search-bar { background: #111; border: 1px solid var(--gold); color: #fff; padding: 8px 12px; border-radius: 6px; width: 200px; outline: none; }
+        .header { padding: 10px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        #search-bar { background: #111; border: 1px solid var(--gold); color: #fff; padding: 6px 10px; border-radius: 6px; width: 150px; outline: none; font-size: 0.8rem; }
         
-        .toggle-container { display: flex; background: #111; padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
-        .toggle-btn { padding: 6px 14px; border: none; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
+        .toggle-container { display: flex; background: #111; padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
+        .toggle-btn { padding: 5px 12px; border: none; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 0.65rem; font-weight: bold; }
         .toggle-btn.active { background: var(--gold-grad); color: #000; }
 
-        .content { padding: 20px 30px; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
-        .table-wrapper { width: 100%; overflow: auto; border: 1px solid var(--border); background: #0a0a0a; border-radius: 8px; position: relative; }
+        .content { padding: 15px 25px; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
+        .table-wrapper { width: 100%; overflow: auto; border: 1px solid var(--border); background: #0a0a0a; border-radius: 8px; }
         
-        table { width: auto; border-collapse: separate; border-spacing: 0; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: auto; }
         
-        /* Fixed Header visibility */
         th { 
-            position: sticky; top: 0; z-index: 30; 
-            background: #050505; color: var(--gold) !important; 
-            padding: 12px 15px; font-size: 0.65rem; text-transform: uppercase; 
+            position: sticky; top: 0; z-index: 100; 
+            background: #0a0a0a !important; 
+            color: #C5A059 !important; 
+            padding: 10px 12px; font-size: 0.6rem; text-transform: uppercase; 
             border-bottom: 2px solid var(--border); text-align: left;
             white-space: nowrap;
         }
         
-        .sticky-song { position: sticky; left: 0; z-index: 40; min-width: 180px; background: #0f0f0f !important; border-right: 2px solid var(--border); font-weight: bold; }
-        thead th.sticky-song { z-index: 50; top: 0; }
+        /* Narrower Frozen Song Column */
+        .sticky-song { 
+            position: sticky; left: 0; z-index: 110; 
+            width: 140px; max-width: 140px;
+            background: #0f0f0f !important; 
+            border-right: 2px solid var(--border); 
+            font-weight: bold;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        thead th.sticky-song { z-index: 120; top: 0; }
 
-        td { padding: 12px 15px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: #fff; white-space: nowrap; }
+        td { padding: 10px 12px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.75rem; color: #fff; white-space: nowrap; }
         .heat-cell { color: #000 !important; font-weight: bold; text-align: center; }
 
-        .stream-cell { color: var(--gold); font-weight: bold; cursor: help; position: relative; }
+        .stream-cell { color: var(--gold); font-weight: bold; cursor: help; }
     </style>
 </head>
 <body>
@@ -59,9 +67,9 @@
 
 <main>
     <div class="header">
-        <h2 id="view-title" style="margin:0; font-size: 1.2rem;">Priority Tracks</h2>
+        <h2 id="view-title" style="margin:0; font-size: 1rem;">Priority Tracks</h2>
         <div style="display:flex; gap:15px; align-items:center;">
-            <input type="text" id="search-bar" placeholder="Search song..." oninput="renderTable()">
+            <input type="text" id="search-bar" placeholder="Search..." oninput="renderTable()">
             <div class="toggle-container">
                 <button id="btn-released" class="toggle-btn active" onclick="setMode('released')">RELEASED</button>
                 <button id="btn-unreleased" class="toggle-btn" onclick="setMode('unreleased')">UNRELEASED</button>
@@ -99,9 +107,8 @@ function clearFilter() {
 }
 
 function getTeaseHeat(teaseDateStr, relDateStr) {
-    if (!teaseDateStr || !relDateStr || relDateStr.toLowerCase().includes('undecided') || relDateStr.toLowerCase().includes('tbd')) return 'background: #fff;';
-    const t = new Date(teaseDateStr);
-    const r = new Date(relDateStr);
+    if (!teaseDateStr || !relDateStr || relDateStr.toLowerCase().includes('tbd')) return 'background: #fff;';
+    const t = new Date(teaseDateStr); const r = new Date(relDateStr);
     if (isNaN(t) || isNaN(r)) return 'background: #fff;';
     const diff = (r - t) / (1000 * 60 * 60 * 24);
     return diff >= 20 ? 'background: #1DB954;' : (diff < 10 ? 'background: #ff4444;' : 'background: #fff;');
@@ -120,42 +127,32 @@ function getRelativeHeat(val, min, max) {
     if (min === max) return 'background: #fff;'; 
     const ratio = (n - min) / (max - min || 1);
     let r, g, b = 255;
-    if (ratio < 0.5) {
-        let f = ratio * 2; r = 255; g = Math.floor(f * 255); b = Math.floor(f * 255);
-    } else {
-        let f = (ratio - 0.5) * 2; r = Math.floor((1 - f) * 255); g = 255; b = Math.floor((1 - f) * 255);
-    }
+    if (ratio < 0.5) { let f = ratio * 2; r = 255; g = Math.floor(f * 255); b = Math.floor(f * 255); } 
+    else { let f = (ratio - 0.5) * 2; r = Math.floor((1 - f) * 255); g = 255; b = Math.floor((1 - f) * 255); }
     return `background: rgb(${r},${g},${b});`;
 }
 
 function renderTable() {
     const searchTerm = document.getElementById('search-bar').value.toLowerCase();
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0,0,0,0);
 
     let visibleSongs = allMasterData.filter(row => {
         const artist = (row[0] || "").trim();
         const song = (row[1] || "").trim();
-        const dateStr = (row[3] || "").trim();
+        const dateStr = (row[3] || "").trim().toLowerCase();
         const relDate = new Date(dateStr);
-        const isTBD = dateStr.toLowerCase().includes('tbd') || dateStr.toLowerCase().includes('undecided') || dateStr === "";
+        const isTBD = dateStr.includes('tbd') || dateStr.includes('undecided') || dateStr === "";
         const isLegacyException = LEGACY_EXCEPTIONS.some(ex => song.toLowerCase().includes(ex.toLowerCase()));
 
-        // YEAR FILTER Logic
         if (!isTBD && !isNaN(relDate)) {
-            const releaseYear = relDate.getFullYear();
-            if (releaseYear <= 2024 && !isLegacyException) return false;
+            if (relDate.getFullYear() <= 2024 && !isLegacyException) return false;
         }
-
         if (!PRIORITY_ARTISTS.includes(artist)) return false;
-
-        // TAB Logic
         if (currentMode === 'released') {
             if (isTBD || isNaN(relDate) || relDate > today) return false;
         } else {
             if (!isTBD && relDate <= today) return false;
         }
-
         return (currentArtistFilter ? artist === currentArtistFilter : true) && song.toLowerCase().includes(searchTerm);
     });
 
@@ -175,14 +172,14 @@ function renderTable() {
         const artist1stWk = { min: Math.min(...artistVisible.map(r => parseNum(r[6]))), max: Math.max(...artistVisible.map(r => parseNum(r[6]))) };
         const artistAvgWk = { min: Math.min(...artistVisible.map(r => parseNum(r[9]))), max: Math.max(...artistVisible.map(r => parseNum(r[9]))) };
 
-        let rowData = `<td class="sticky-song">${row[1]}</td><td>${row[0]}</td><td class="heat-cell" style="${getTeaseHeat(row[2], row[3])}">${row[2] || '-'}</td><td style="color:var(--gold); font-weight:bold;">${row[3] || 'TBD'}</td>`;
+        let rowData = `<td class="sticky-song" title="${row[1]}">${row[1]}</td><td>${row[0]}</td><td class="heat-cell" style="${getTeaseHeat(row[2], row[3])}">${row[2] || '-'}</td><td style="color:var(--gold); font-weight:bold;">${row[3] || 'TBD'}</td>`;
 
         if (currentMode === 'released') {
             rowData += `
                 <td class="heat-cell" style="${getFixedHeat(row[40], 20, 10)}">${row[40] || '0'}</td>
                 <td class="heat-cell" style="${getRelativeHeat(row[6], artist1stWk.min, artist1stWk.max)}">${row[6] || '0'}</td>
                 <td class="heat-cell" style="${getFixedHeat(row[41], 20, 15)}">${row[41] || '0'}</td>
-                <td class="stream-cell">${row[7] || '0'}</td>
+                <td class="stream-cell" title="Updated: ${row[4] || 'N/A'}">${row[7] || '0'}</td>
                 <td class="heat-cell" style="${getRelativeHeat(row[9], artistAvgWk.min, artistAvgWk.max)}">${row[9] || '0'}</td>
                 <td class="heat-cell" style="${getFixedHeat(row[42], 40, 20)}">${row[42] || '0'}</td>
                 <td class="heat-cell" style="${getRelativeHeat(row[36], globalUGC.min, globalUGC.max)}">${row[36] || '0'}</td>`;
