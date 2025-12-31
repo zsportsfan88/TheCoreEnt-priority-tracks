@@ -1,5 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Core - Priority Tracks V35</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        :root { --gold: #C5A059; --bg: #000; --border: #333; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        aside { width: 160px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
+        @media (max-width: 768px) { aside { display: none; } }
+
+        .nav { flex: 1; overflow-y: auto; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; transition: 0.2s; }
+        li:hover { color: #fff; background: #1a1a1a; }
+        li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
+
+        main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .header-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 300; }
+        
+        .table-wrapper { flex: 1; overflow: auto; background: #000; -webkit-overflow-scrolling: touch; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+
+        thead th { 
+            position: sticky; top: 0; z-index: 200;
+            background-color: #111 !important; 
+            color: var(--gold) !important;
+            padding: 10px; font-size: 0.65rem; text-transform: uppercase;
+            border-bottom: 2px solid var(--gold); 
+            text-align: center; 
+            height: 95px !important; vertical-align: bottom; line-height: 1.2;
+            word-wrap: break-word; white-space: normal;
+        }
+
+        .sticky-song { 
+            position: sticky; left: 0; z-index: 210;
+            width: 210px !important; min-width: 210px !important;
+            background-color: #0a0a0a !important; 
+            border-right: 2px solid var(--border);
+            font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            text-align: center;
+        }
+        thead th.sticky-song { z-index: 250; background-color: #111 !important; }
+
+        .artist-cell { text-align: center; width: 160px !important; min-width: 160px !important; }
+        td { padding: 12px 10px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: #fff; white-space: nowrap; }
+        
+        .heat-cell { color: #000 !important; font-weight: 900; text-align: center; }
+        .date-col { font-size: 0.75rem; color: #888; text-align: center; width: 90px; }
+        .stream-val { color: var(--gold); font-weight: bold; text-align: center; }
+
+        .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 6px 12px; cursor: pointer; font-size: 0.7rem; font-weight: bold; border-radius: 4px; }
+        .toggle-btn.active { background: var(--gold); color: #000; }
+    </style>
+</head>
+<body>
+
+<aside>
+    <div style="color:var(--gold); font-weight:900; letter-spacing:2px; margin-bottom:20px; text-align:center;">THE CORE</div>
+    <div class="nav"><ul id="artist-list"></ul></div>
+    <li onclick="clearFilter()" style="list-style:none; color:var(--gold); text-align:center; border: 1px solid #333; margin-top:10px; cursor:pointer;">SHOW ALL</li>
+</aside>
+
+<main>
+    <div class="header-bar">
+        <h2 id="view-title" style="margin:0; font-size:1.1rem;">Priority Tracks</h2>
+        <div style="display:flex; gap:10px;">
+            <button id="btn-released" class="toggle-btn active" onclick="setMode('released')">RELEASED</button>
+            <button id="btn-unreleased" class="toggle-btn" onclick="setMode('unreleased')">UNRELEASED</button>
+        </div>
+    </div>
+    <div class="table-wrapper" id="table-output"></div>
+</main>
+
 <script>
-// MASTER_CSV stays the same
 const MASTER_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp-yQVU_VNNOR5aXQ7m-Xv7BiAgYKjBfJuT6lIETy6ksjqR-Lj2WW4DNqYGCNX2rfCpUtemiS1shes/pub?gid=2070907343&single=true&output=csv';
 const ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wisham", "Cameron Whitcomb", "Dan + Shay", "Danielle Bradbery", "Dax", "Deltona", "Hannah McFarland", "Josh Ross", "Just Jayne", "Nate Smith"];
 const EXCLUDE = ["Clever", "Ryan Hurd"];
@@ -56,11 +133,9 @@ function render() {
     let body = `<tbody>`;
     songs.forEach(r => {
         const teaseStyle = getTeaseColor(r[2], r[3]);
-        // Note: Indices 5 and 6 are skipped (Status and Luminate ID)
         body += `<tr><td class="sticky-song">${r[1]}</td><td class="artist-cell">${r[0]}</td><td style="${teaseStyle}">${r[2] || '-'}</td><td style="color:var(--gold); font-weight:bold; text-align:center;">${r[3] || 'TBD'}</td><td class="date-col">${r[4] || '-'}</td>`;
-        
         if (currentMode === 'released') {
-            // Indices shifted +2 (e.g., old 40 is now 42, old 6 is now 8)
+            // Updated indices to account for Status (F) and Luminate ID (G)
             body += `<td class="heat-cell" style="${getHeat(r[42], 0, 40)}">${r[42] || '0'}</td>
                      <td class="heat-cell" style="${getHeat(r[8], 0, 1000000)}">${r[8] || '0'}</td>
                      <td class="heat-cell" style="${getHeat(r[43], 0, 40)}">${r[43] || '0'}</td>
@@ -69,7 +144,7 @@ function render() {
                      <td class="heat-cell" style="${getHeat(r[44], 0, 80)}">${r[44] || '0'}</td>
                      <td class="heat-cell" style="${getHeat(r[38], 0, 50000)}">${r[38] || '0'}</td>`;
         } else {
-            // Unreleased shift
+            // Updated indices for Unreleased view
             body += `<td class="heat-cell" style="${getHeat(r[42], 0, 40)}">${r[42] || '0'}</td>
                      <td class="heat-cell" style="${getHeat(r[35], 0, 250000)}">${r[35] || '0'}</td>
                      <td class="heat-cell" style="${getHeat(r[34], 0, 15)}">${r[34] || '0%'}</td>
@@ -94,3 +169,5 @@ Papa.parse(MASTER_CSV, {
     }
 });
 </script>
+</body>
+</html>
