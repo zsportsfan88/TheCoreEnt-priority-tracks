@@ -3,56 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Core - Priority Tracks V35</title>
+    <title>The Core - Priority Tracks V35 (Auto-Detect)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --gold: #C5A059; --bg: #000; --border: #333; }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
         aside { width: 160px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
         @media (max-width: 768px) { aside { display: none; } }
-
         .nav { flex: 1; overflow-y: auto; }
         ul { list-style: none; padding: 0; }
         li { padding: 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; transition: 0.2s; }
         li:hover { color: #fff; background: #1a1a1a; }
         li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
-
         main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         .header-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 300; }
-        
         .table-wrapper { flex: 1; overflow: auto; background: #000; -webkit-overflow-scrolling: touch; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
-
         thead th { 
             position: sticky; top: 0; z-index: 200;
-            background-color: #111 !important; 
-            color: var(--gold) !important;
+            background-color: #111 !important; color: var(--gold) !important;
             padding: 10px; font-size: 0.65rem; text-transform: uppercase;
-            border-bottom: 2px solid var(--gold); 
-            text-align: center; 
+            border-bottom: 2px solid var(--gold); text-align: center; 
             height: 95px !important; vertical-align: bottom; line-height: 1.2;
             word-wrap: break-word; white-space: normal;
         }
-
         .sticky-song { 
             position: sticky; left: 0; z-index: 210;
             width: 210px !important; min-width: 210px !important;
-            background-color: #0a0a0a !important; 
-            border-right: 2px solid var(--border);
-            font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-            text-align: center;
+            background-color: #0a0a0a !important; border-right: 2px solid var(--border);
+            font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;
         }
         thead th.sticky-song { z-index: 250; background-color: #111 !important; }
-
         .artist-cell { text-align: center; width: 160px !important; min-width: 160px !important; }
         td { padding: 12px 10px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: #fff; white-space: nowrap; }
-        
         .heat-cell { color: #000 !important; font-weight: 900; text-align: center; }
         .date-col { font-size: 0.75rem; color: #888; text-align: center; width: 90px; }
         .stream-val { color: var(--gold); font-weight: bold; text-align: center; }
-
         .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 6px 12px; cursor: pointer; font-size: 0.7rem; font-weight: bold; border-radius: 4px; }
         .toggle-btn.active { background: var(--gold); color: #000; }
     </style>
@@ -82,6 +69,7 @@ const ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wish
 const EXCLUDE = ["Clever", "Ryan Hurd"];
 
 let allData = [];
+let headers = {}; 
 let currentFilter = null;
 let currentMode = 'released';
 
@@ -110,15 +98,17 @@ function getTeaseColor(teaseStr, relStr) {
 
 function render() {
     const today = new Date(); today.setHours(0,0,0,0);
+    const idx = (name) => headers[name];
+
     let songs = allData.filter(r => {
-        if (!r[1] || r[1].trim() === "") return false;
-        if (EXCLUDE.includes(r[0])) return false;
-        const dateStr = r[3] || "";
+        if (!r[idx("Song")] || r[idx("Song")].trim() === "") return false;
+        if (EXCLUDE.includes(r[idx("Artist")])) return false;
+        const dateStr = r[idx("Release Date")] || "";
         const relDate = new Date(dateStr);
         const isReleased = (!isNaN(relDate) && relDate <= today);
         if (currentMode === 'released' && !isReleased) return false;
         if (currentMode === 'unreleased' && isReleased) return false;
-        return currentFilter ? r[0] === currentFilter : true;
+        return currentFilter ? r[idx("Artist")] === currentFilter : true;
     });
 
     let head = `<thead><tr><th class="sticky-song">Song</th><th class="artist-cell">Artist</th><th style="width:100px">1st Song Tease</th><th style="width:100px">Release Date</th><th style="width:90px" class="date-col">Last Updated</th>`;
@@ -132,23 +122,30 @@ function render() {
 
     let body = `<tbody>`;
     songs.forEach(r => {
-        const teaseStyle = getTeaseColor(r[2], r[3]);
-        body += `<tr><td class="sticky-song">${r[1]}</td><td class="artist-cell">${r[0]}</td><td style="${teaseStyle}">${r[2] || '-'}</td><td style="color:var(--gold); font-weight:bold; text-align:center;">${r[3] || 'TBD'}</td><td class="date-col">${r[4] || '-'}</td>`;
+        const teaseStyle = getTeaseColor(r[idx("1st Song Tease")], r[idx("Release Date")]);
+        
+        body += `<tr>
+            <td class="sticky-song">${r[idx("Song")]}</td>
+            <td class="artist-cell">${r[idx("Artist")]}</td>
+            <td style="${teaseStyle}">${r[idx("1st Song Tease")] || '-'}</td>
+            <td style="color:var(--gold); font-weight:bold; text-align:center;">${r[idx("Release Date")] || 'TBD'}</td>
+            <td class="date-col">${r[idx("Last Updated")] || '-'}</td>`;
+        
         if (currentMode === 'released') {
-            // Updated indices to account for Status (F) and Luminate ID (G)
-            body += `<td class="heat-cell" style="${getHeat(r[42], 0, 40)}">${r[42] || '0'}</td>
-                     <td class="heat-cell" style="${getHeat(r[8], 0, 1000000)}">${r[8] || '0'}</td>
-                     <td class="heat-cell" style="${getHeat(r[43], 0, 40)}">${r[43] || '0'}</td>
-                     <td class="stream-val">${r[9] || '0'}</td>
-                     <td class="heat-cell" style="${getHeat(r[11], 0, 500000)}">${r[11] || '0'}</td>
-                     <td class="heat-cell" style="${getHeat(r[44], 0, 80)}">${r[44] || '0'}</td>
-                     <td class="heat-cell" style="${getHeat(r[38], 0, 50000)}">${r[38] || '0'}</td>`;
+            body += `
+                <td class="heat-cell" style="${getHeat(r[idx("Pre-Rel Posts/ Platform")], 0, 40)}">${r[idx("Pre-Rel Posts/ Platform")] || '0'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx("1st Wk Streams")], 0, 1000000)}">${r[idx("1st Wk Streams")] || '0'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx("Post-Rel Posts/ Platform")], 0, 40)}">${r[idx("Post-Rel Posts/ Platform")] || '0'}</td>
+                <td class="stream-val">${r[idx("Current Streams")] || '0'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx("Avg Weekly Streams")], 0, 500000)}">${r[idx("Avg Weekly Streams")] || '0'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx("Total Posts/ Platform")], 0, 80)}">${r[idx("Total Posts/ Platform")] || '0'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx("Total UGC")], 0, 50000)}">${r[idx("Total UGC")] || '0'}</td>`;
         } else {
-            // Updated indices for Unreleased view
-            body += `<td class="heat-cell" style="${getHeat(r[42], 0, 40)}">${r[42] || '0'}</td>
-                     <td class="heat-cell" style="${getHeat(r[35], 0, 250000)}">${r[35] || '0'}</td>
-                     <td class="heat-cell" style="${getHeat(r[34], 0, 15)}">${r[34] || '0%'}</td>
-                     <td class="heat-cell" style="${getHeat(r[38], 0, 10000)}">${r[38] || '0'}</td>`;
+            body += `
+                <td class="heat-cell" style="${getHeat(r[idx("Pre-Rel Posts/ Platform")], 0, 40)}">${r[idx("Pre-Rel Posts/ Platform")] || '0'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx("Avg Views/ Post")], 0, 250000)}">${r[idx("Avg Views/ Post")] || '0'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx("Avg Engagement Rate")], 0, 15)}">${r[idx("Avg Engagement Rate")] || '0%'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx("Total UGC")], 0, 10000)}">${r[idx("Total UGC")] || '0'}</td>`;
         }
         body += `</tr>`;
     });
@@ -158,6 +155,8 @@ function render() {
 Papa.parse(MASTER_CSV, {
     download: true, skipEmptyLines: true,
     complete: (res) => {
+        const rawHeaders = res.data[0];
+        rawHeaders.forEach((h, i) => headers[h.trim()] = i);
         allData = res.data.slice(1);
         const list = document.getElementById('artist-list');
         ARTISTS.sort().forEach(a => {
