@@ -25,7 +25,6 @@
         .table-wrapper { flex: 1; overflow: auto; background: #000; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; }
         
-        /* THE CRITICAL STICKY FIXES */
         thead th { 
             position: sticky; top: 0; z-index: 400; 
             background-color: var(--panel) !important; color: var(--gold) !important; 
@@ -44,7 +43,6 @@
         }
 
         td { padding: 12px 15px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.82rem; color: #fff; text-align: center; white-space: nowrap; }
-        .heat-cell { color: #000 !important; font-weight: 900; }
         .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 10px 20px; cursor: pointer; font-size: 0.75rem; font-weight: bold; border-radius: 4px; }
         .toggle-btn.active { background: var(--gold); color: #000; }
     </style>
@@ -79,12 +77,15 @@ let headers = [];
 let currentFilter = null;
 let currentMode = 'released';
 
-// Helper to find column index by name
-const findCol = (names) => {
-    return headers.findIndex(h => names.some(n => h.trim().toLowerCase() === n.toLowerCase()));
+// Robust helper to find column even with minor spelling/spacing differences
+const findCol = (searchNames) => {
+    return headers.findIndex(h => {
+        const cleanHeader = h.trim().toLowerCase();
+        return searchNames.some(s => cleanHeader === s.toLowerCase() || cleanHeader.includes(s.toLowerCase()));
+    });
 };
 
-const n = (v) => { if(!v) return 0; return parseFloat(String(v).replace(/[%,$]/g,'')) || 0; };
+const n = (v) => { if(!v || v === "-") return 0; return parseFloat(String(v).replace(/[%,$]/g,'')) || 0; };
 
 function getTeaseHeat(teaseStr, relStr) {
     if (!teaseStr || !relStr || teaseStr === "-" || relStr === "-") return '';
@@ -124,20 +125,20 @@ function getEngageHeat(val) {
 function render() {
     const query = document.getElementById('search-input').value.toLowerCase();
     
-    // Dynamic Mapping - Finds the correct index based on header name
+    // Updated Mapping Logic - looking for multiple possible matches for Column L (Avg Weekly)
     const idx = {
         song: findCol(['SONG']),
         artist: findCol(['ARTIST']),
         tease: findCol(['1st Song Tease', '1st Post']),
         relDate: findCol(['RELEASE DATE']),
-        updated: findCol(['Last Updated']),
+        updated: findCol(['Last Updated', 'Updated']),
         status: findCol(['Status']),
-        pre: findCol(['Pre-Release Posts/ Platform', 'Pre-Release Artist Posts per platform']),
+        pre: findCol(['Pre-Release Posts/ Platform', 'Pre-Release Artist Posts']),
         wk1: findCol(['1st Wk Streams', '1st Week streams']),
-        post: findCol(['Post-Release Posts/ Platform', 'Post-Release Artist Posts per platform']),
+        post: findCol(['Post-Release Posts/ Platform', 'Post-Release Artist Posts']),
         curr: findCol(['Current Streams']),
-        avgS: findCol(['Avg Weekly Streams']),
-        totalP: findCol(['Total Posts/ Platform', 'TOTAL artist posts per platform']),
+        avgS: findCol(['Avg Weekly Streams', 'Average Weekly Streams', 'Average Weekly']),
+        totalP: findCol(['Total Posts/ Platform', 'TOTAL artist posts']),
         views: findCol(['Avg Views/ Post', 'artist average views']),
         er: findCol(['Engagement Rate', 'Artists Engagement Rate', 'ENG %']),
         ugc: findCol(['Total UGC'])
@@ -220,6 +221,7 @@ Papa.parse(MASTER_CSV, {
         headers = res.data[0]; 
         allData = res.data.slice(1);
         const list = document.getElementById('artist-list');
+        list.innerHTML = ""; // Clear list before rendering
         ARTISTS.sort().forEach(a => {
             let li = document.createElement('li'); li.innerText = a;
             li.onclick = () => { 
