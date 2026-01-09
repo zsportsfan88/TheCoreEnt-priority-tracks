@@ -10,7 +10,7 @@
         * { box-sizing: border-box; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        aside { width: 200px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; z-index: 600; }
+        aside { width: 210px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; z-index: 600; }
         .nav { flex: 1; overflow-y: auto; }
         ul { list-style: none; padding: 0; }
         li { padding: 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; transition: 0.2s; margin-bottom: 2px; }
@@ -34,22 +34,16 @@
             min-width: 120px;
         }
         
-        /* Top Left Corner (Song Header) */
-        thead th.sticky-song {
-            z-index: 500 !important; 
-            left: 0;
-            background-color: var(--panel) !important;
-        }
+        thead th.sticky-song { z-index: 500 !important; left: 0; background-color: var(--panel) !important; }
 
-        /* Song Title Column */
         td.sticky-song { 
             position: sticky; left: 0; z-index: 300; 
-            min-width: 220px !important; background-color: #0a0a0a !important; 
+            min-width: 240px !important; background-color: #0a0a0a !important; 
             border-right: 2px solid var(--border); font-weight: bold; 
             text-align: left; padding-left: 15px !important; font-size: 0.8rem;
         }
 
-        td { padding: 12px 10px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.82rem; color: #fff; text-align: center; white-space: nowrap; }
+        td { padding: 12px 15px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.82rem; color: #fff; text-align: center; white-space: nowrap; }
         .heat-cell { color: #000 !important; font-weight: 900; }
         .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 10px 20px; cursor: pointer; font-size: 0.75rem; font-weight: bold; border-radius: 4px; }
         .toggle-btn.active { background: var(--gold); color: #000; }
@@ -85,19 +79,19 @@ let headers = [];
 let currentFilter = null;
 let currentMode = 'released';
 
-const col = (idx) => idx; // Using direct column indices for stability
+// Helper to find column index by name
+const findCol = (names) => {
+    return headers.findIndex(h => names.some(n => h.trim().toLowerCase() === n.toLowerCase()));
+};
 
 const n = (v) => { if(!v) return 0; return parseFloat(String(v).replace(/[%,$]/g,'')) || 0; };
 
-// 1st Song Tease Logic
 function getTeaseHeat(teaseStr, relStr) {
     if (!teaseStr || !relStr || teaseStr === "-" || relStr === "-") return '';
     const tease = new Date(teaseStr);
     const rel = new Date(relStr);
     if (isNaN(tease) || isNaN(rel)) return '';
-    
     const diffDays = Math.floor((rel - tease) / (1000 * 60 * 60 * 24));
-    
     if (diffDays >= 20) return 'background: var(--green); color: #000 !important; font-weight: 900;';
     if (diffDays < 14) return 'background: var(--red); color: #000 !important; font-weight: 900;';
     return 'background: #fff; color: #000 !important; font-weight: 900;';
@@ -130,13 +124,27 @@ function getEngageHeat(val) {
 function render() {
     const query = document.getElementById('search-input').value.toLowerCase();
     
-    // Explicit Mapping Based on Column Letter
+    // Dynamic Mapping - Finds the correct index based on header name
     const idx = {
-        song: 0, artist: 1, tease: 2, relDate: 3, updated: 4, status: 5,
-        pre: 6, wk1: 7, post: 8, curr: 9, avgS: 11, totalP: 12, views: 13, er: 14, ugc: 15
+        song: findCol(['SONG']),
+        artist: findCol(['ARTIST']),
+        tease: findCol(['1st Song Tease', '1st Post']),
+        relDate: findCol(['RELEASE DATE']),
+        updated: findCol(['Last Updated']),
+        status: findCol(['Status']),
+        pre: findCol(['Pre-Release Posts/ Platform', 'Pre-Release Artist Posts per platform']),
+        wk1: findCol(['1st Wk Streams', '1st Week streams']),
+        post: findCol(['Post-Release Posts/ Platform', 'Post-Release Artist Posts per platform']),
+        curr: findCol(['Current Streams']),
+        avgS: findCol(['Avg Weekly Streams']),
+        totalP: findCol(['Total Posts/ Platform', 'TOTAL artist posts per platform']),
+        views: findCol(['Avg Views/ Post', 'artist average views']),
+        er: findCol(['Engagement Rate', 'Artists Engagement Rate', 'ENG %']),
+        ugc: findCol(['Total UGC'])
     };
 
     const getLocalMax = (colIdx) => {
+        if (colIdx === -1) return 1;
         let pool = allData.filter(r => {
             const artist = r[idx.artist] || "";
             if (EXCLUDE_LIST.includes(artist)) return false;
@@ -174,8 +182,8 @@ function render() {
     songs.forEach(r => {
         const ugcGoal = artistMaxUGC > 10000 ? artistMaxUGC : 10000;
         let row = `<tr>
-            <td class="sticky-song">${r[idx.song]}</td>
-            <td style="text-align:left; font-weight:bold;">${r[idx.artist]}</td>
+            <td class="sticky-song">${r[idx.song] || '-'}</td>
+            <td style="text-align:left; font-weight:bold;">${r[idx.artist] || '-'}</td>
             <td style="${getTeaseHeat(r[idx.tease], r[idx.relDate])}">${r[idx.tease] || '-'}</td>
             <td>${r[idx.relDate] || '-'}</td>
             <td>${r[idx.updated] || '-'}</td>`;
