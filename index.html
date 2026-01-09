@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Core - Priority Tracks V36</title>
+    <title>The Core - Priority Tracks v36</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        :root { --gold: #C5A059; --bg: #000; --border: #333; }
+        :root { --gold: #C5A059; --bg: #000; --border: #333; --red: #ff4444; --green: #1DB954; }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        aside { width: 160px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
-        @media (max-width: 768px) { aside { display: none; } }
-
+        aside { width: 165px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
         .nav { flex: 1; overflow-y: auto; }
         ul { list-style: none; padding: 0; }
         li { padding: 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; transition: 0.2s; }
@@ -22,47 +20,39 @@
         main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         .header-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 300; }
         
-        .table-wrapper { flex: 1; overflow: auto; background: #000; -webkit-overflow-scrolling: touch; }
+        .table-wrapper { flex: 1; overflow: auto; background: #000; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
 
         thead th { 
             position: sticky; top: 0; z-index: 200;
             background-color: #111 !important; 
             color: var(--gold) !important;
-            padding: 10px; font-size: 0.65rem; text-transform: uppercase;
+            padding: 10px; font-size: 0.6rem; text-transform: uppercase;
             border-bottom: 2px solid var(--gold); 
-            text-align: center; 
-            height: 95px !important; vertical-align: bottom; line-height: 1.2;
-            word-wrap: break-word; white-space: normal;
+            text-align: center; height: 80px; vertical-align: bottom; line-height: 1.1;
         }
 
         .sticky-song { 
             position: sticky; left: 0; z-index: 210;
-            width: 210px !important; min-width: 210px !important;
+            width: 190px !important;
             background-color: #0a0a0a !important; 
             border-right: 2px solid var(--border);
-            font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-            text-align: center;
+            font-weight: bold; text-align: center; font-size: 0.8rem;
         }
-        thead th.sticky-song { z-index: 250; background-color: #111 !important; }
 
-        .artist-cell { text-align: center; width: 160px !important; min-width: 160px !important; }
-        td { padding: 12px 10px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: #fff; white-space: nowrap; }
+        td { padding: 12px 8px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: #fff; text-align: center; }
         
-        .heat-cell { color: #000 !important; font-weight: 900; text-align: center; }
-        .date-col { font-size: 0.75rem; color: #888; text-align: center; width: 90px; }
-        .stream-val { color: var(--gold); font-weight: bold; text-align: center; }
-
-        .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 6px 12px; cursor: pointer; font-size: 0.7rem; font-weight: bold; border-radius: 4px; }
+        .heat-cell { color: #000 !important; font-weight: 900; }
+        .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 8px 16px; cursor: pointer; font-size: 0.75rem; font-weight: bold; border-radius: 4px; }
         .toggle-btn.active { background: var(--gold); color: #000; }
     </style>
 </head>
 <body>
 
 <aside>
-    <div style="color:var(--gold); font-weight:900; letter-spacing:2px; margin-bottom:20px; text-align:center;">THE CORE</div>
+    <div style="color:var(--gold); font-weight:900; letter-spacing:2px; margin-bottom:20px; text-align:center; font-size:0.9rem;">THE CORE</div>
     <div class="nav"><ul id="artist-list"></ul></div>
-    <div id="clear-btn" onclick="clearFilter()" style="padding:10px; color:var(--gold); text-align:center; border: 1px solid #333; margin-top:10px; cursor:pointer; font-size: 0.75rem;">SHOW ALL</div>
+    <div onclick="clearFilter()" style="padding:10px; color:var(--gold); text-align:center; border: 1px solid #333; margin-top:10px; cursor:pointer; font-size: 0.7rem;">SHOW ALL</div>
 </aside>
 
 <main>
@@ -86,18 +76,98 @@ let headers = [];
 let currentFilter = null;
 let currentMode = 'released';
 
-// Robust helper to find column index by name (case-insensitive & trimmed)
-const col = (name) => {
-    const index = headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
-    if (index === -1) console.warn("Could not find column:", name);
-    return index;
-};
+const col = (name) => headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
+const n = (v) => { if(!v) return 0; return parseFloat(String(v).replace(/[%,$]/g,'')) || 0; };
 
-const n = (v) => { 
-    if (!v) return 0; 
-    let cleaned = String(v).replace(/[%,$]/g,'').trim();
-    return parseFloat(cleaned) || 0; 
-};
+// --- COLOR LOGIC ---
+function getHeat(val, min, max) {
+    let num = n(val);
+    if (num === 0 && min === 0) return 'background: #222; color: #666 !important;';
+    const ratio = Math.min(Math.max((num - min) / (max - min || 1), 0), 1);
+    let r, g, b;
+    if (ratio < 0.5) { let f = ratio * 2; r = 255; g = Math.floor(255 * f); b = Math.floor(255 * f); }
+    else { let f = (ratio - 0.5) * 2; r = Math.floor(255 * (1 - f)); g = 255; b = Math.floor(255 * (1 - f)); }
+    return `background: rgb(${r},${g},${b}); color: #000;`;
+}
+
+function getPostHeat(val, redMin, greenMin) {
+    let num = n(val);
+    if (num < redMin) return 'background: var(--red); color: #000;';
+    if (num >= greenMin) return 'background: var(--green); color: #000;';
+    return 'background: #fff; color: #000;';
+}
+
+function getEngageHeat(val) {
+    let num = n(val);
+    if (num < 5) return 'background: var(--red); color: #000;';
+    if (num >= 10) return 'background: var(--green); color: #000;';
+    return getHeat(num, 5, 10); // White to Green gradient between 5% and 10%
+}
+
+function render() {
+    const idx = {
+        artist: col('ARTIST'), song: col('SONG'), status: col('Status'),
+        relDate: col('RELEASE DATE'), pre: col('Pre-Release Artist Posts per platform'),
+        post: col('Post-Release Artist Posts per platform'), totalP: col('TOTAL artist posts per platform'),
+        wk1: col('1st Week streams'), curr: col('Current Streams'), avgS: col('Average Weekly Streams'),
+        ugc: col('Total UGC'), views: col('artist average views'), er: col('Artists Engagement Rate')
+    };
+
+    // Helper for Relative Benchmarking
+    const getLocalMax = (colIdx) => {
+        let pool = allData.filter(r => currentFilter ? r[idx.artist] === currentFilter : true);
+        return Math.max(...pool.map(r => n(r[colIdx])), 1);
+    };
+
+    const maxWk1 = getLocalMax(idx.wk1);
+    const maxAvgS = getLocalMax(idx.avgS);
+    const maxViews = getLocalMax(idx.views);
+    const artistMaxUGC = getLocalMax(idx.ugc);
+
+    let songs = allData.filter(r => {
+        const artist = r[idx.artist];
+        const status = (r[idx.status] || "").trim().toLowerCase();
+        if (!r[idx.song] || EXCLUDE.includes(artist)) return false;
+        if (currentMode === 'released' && status !== 'released') return false;
+        if (currentMode === 'unreleased' && status !== 'unreleased') return false;
+        return currentFilter ? artist === currentFilter : true;
+    });
+
+    let head = `<thead><tr><th class="sticky-song">Song</th><th style="width:120px">Artist</th>`;
+    if (currentMode === 'released') {
+        head += `<th>Pre-Rel Posts</th><th>Post-Rel Posts</th><th>Total Posts</th><th>1st Wk Streams</th><th>Avg Weekly</th><th>Avg Views</th><th>Engage</th><th>Total UGC</th>`;
+    } else {
+        head += `<th>Pre-Rel Posts</th><th>Avg Views</th><th>Engage</th><th>Total UGC</th>`;
+    }
+    head += `</tr></thead><tbody>`;
+
+    songs.forEach(r => {
+        let row = `<tr><td class="sticky-song">${r[idx.song]}</td><td>${r[idx.artist]}</td>`;
+        
+        if (currentMode === 'released') {
+            // Logic for UGC Threshold: 10k floor for developing artists, sliding max for stars
+            const ugcGoal = artistMaxUGC > 10000 ? artistMaxUGC : 10000;
+
+            row += `
+                <td class="heat-cell" style="${getPostHeat(r[idx.pre], 10, 19)}">${r[idx.pre] || 0}</td>
+                <td class="heat-cell" style="${getPostHeat(r[idx.post], 15, 24)}">${r[idx.post] || 0}</td>
+                <td class="heat-cell" style="${getPostHeat(r[idx.totalP], 40, 49)}">${r[idx.totalP] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.wk1], 0, maxWk1)}">${r[idx.wk1] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.avgS], 0, maxAvgS)}">${r[idx.avgS] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.views], 0, maxViews)}">${r[idx.views] || 0}</td>
+                <td class="heat-cell" style="${getEngageHeat(r[idx.er])}">${r[idx.er] || '0%'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, ugcGoal)}">${r[idx.ugc] || 0}</td>`;
+        } else {
+            row += `
+                <td class="heat-cell" style="${getPostHeat(r[idx.pre], 10, 19)}">${r[idx.pre] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.views], 0, maxViews)}">${r[idx.views] || 0}</td>
+                <td class="heat-cell" style="${getEngageHeat(r[idx.er])}">${r[idx.er] || '0%'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, 1000)}">${r[idx.ugc] || 0}</td>`;
+        }
+        head += row + `</tr>`;
+    });
+    document.getElementById('table-output').innerHTML = `<table>${head}</tbody></table>`;
+}
 
 function setMode(m) { 
     currentMode = m; 
@@ -113,103 +183,18 @@ function clearFilter() {
     render(); 
 }
 
-function getHeat(val, min, max) {
-    let num = n(val); 
-    if (num === 0 && min === 0) return 'background: #222; color: #666 !important;';
-    const ratio = Math.min(Math.max((num - min) / (max - min || 1), 0), 1);
-    let r, g, b;
-    if (ratio < 0.5) { let f = ratio * 2; r = 255; g = Math.floor(255 * f); b = Math.floor(255 * f); }
-    else { let f = (ratio - 0.5) * 2; r = Math.floor(255 * (1 - f)); g = 255; b = Math.floor(255 * (1 - f)); }
-    return `background: rgb(${r},${g},${b});`;
-}
-
-function getTeaseColor(teaseStr, relStr) {
-    const tDate = new Date(teaseStr); const rDate = new Date(relStr);
-    if (isNaN(tDate) || isNaN(rDate)) return 'text-align:center;';
-    const diffDays = (rDate - tDate) / (1000 * 60 * 60 * 24);
-    if (diffDays >= 20) return 'background: #1DB954; color: #000; font-weight: 900; text-align: center;';
-    if (diffDays < 10) return 'background: #ff4444; color: #000; font-weight: 900; text-align: center;';
-    return 'background: #fff; color: #000; font-weight: 900; text-align: center;';
-}
-
-function render() {
-    const today = new Date(); today.setHours(0,0,0,0);
-    
-    // Mapping our specific keys to spreadsheet headers
-    const idx = {
-        artist: col('ARTIST'),
-        song: col('SONG'),
-        tease: col('1st Post'),
-        release: col('RELEASE DATE'),
-        updated: col('Updated'),
-        prePosts: col('Pre-Release Artist Posts per platform'),
-        postPosts: col('Post-Release Artist Posts per platform'),
-        totalPosts: col('TOTAL artist posts per platform'),
-        wk1Streams: col('1st Week streams'),
-        currStreams: col('Current Streams'),
-        avgStreams: col('Average Weekly Streams'),
-        ugc: col('Total UGC'),
-        views: col('artist average views'),
-        engagement: col('Artists Engagement Rate')
-    };
-
-    let songs = allData.filter(r => {
-        if (!r[idx.song] || r[idx.song].trim() === "") return false;
-        if (EXCLUDE.includes(r[idx.artist])) return false;
-        const relDate = new Date(r[idx.release]);
-        const isReleased = (!isNaN(relDate) && relDate <= today);
-        if (currentMode === 'released' && !isReleased) return false;
-        if (currentMode === 'unreleased' && isReleased) return false;
-        return currentFilter ? r[idx.artist] === currentFilter : true;
-    });
-
-    let head = `<thead><tr><th class="sticky-song">Song</th><th class="artist-cell">Artist</th><th style="width:100px">1st Song Tease</th><th style="width:100px">Release Date</th><th style="width:90px" class="date-col">Last Updated</th>`;
-
-    if (currentMode === 'released') {
-        head += `<th style="width:115px">Pre-Rel Posts/ Platform</th><th style="width:110px">1st Wk Streams</th><th style="width:115px">Post-Rel Posts/ Platform</th><th style="width:120px">Current Streams</th><th style="width:110px">Avg Weekly Streams</th><th style="width:115px">Total Posts/ Platform</th><th style="width:105px">Total UGC</th>`;
-    } else {
-        head += `<th style="width:115px">Pre-Rel Posts/ Platform</th><th style="width:115px">Avg Views/ Post</th><th style="width:115px">Avg Engagement Rate</th><th style="width:115px">Total UGC</th>`;
-    }
-    head += `</tr></thead><tbody>`;
-
-    songs.forEach(r => {
-        const teaseStyle = getTeaseColor(r[idx.tease], r[idx.release]);
-        let bodyRow = `<tr><td class="sticky-song">${r[idx.song]}</td><td class="artist-cell">${r[idx.artist]}</td><td style="${teaseStyle}">${r[idx.tease] || '-'}</td><td style="color:var(--gold); font-weight:bold; text-align:center;">${r[idx.release] || 'TBD'}</td><td class="date-col">${r[idx.updated] || '-'}</td>`;
-        
-        if (currentMode === 'released') {
-            bodyRow += `<td class="heat-cell" style="${getHeat(r[idx.prePosts], 0, 40)}">${r[idx.prePosts] || '0'}</td>
-                        <td class="heat-cell" style="${getHeat(r[idx.wk1Streams], 0, 1000000)}">${r[idx.wk1Streams] || '0'}</td>
-                        <td class="heat-cell" style="${getHeat(r[idx.postPosts], 0, 40)}">${r[idx.postPosts] || '0'}</td>
-                        <td class="stream-val">${r[idx.currStreams] || '0'}</td>
-                        <td class="heat-cell" style="${getHeat(r[idx.avgStreams], 0, 500000)}">${r[idx.avgStreams] || '0'}</td>
-                        <td class="heat-cell" style="${getHeat(r[idx.totalPosts], 0, 80)}">${r[idx.totalPosts] || '0'}</td>
-                        <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, 50000)}">${r[idx.ugc] || '0'}</td>`;
-        } else {
-            bodyRow += `<td class="heat-cell" style="${getHeat(r[idx.prePosts], 0, 40)}">${r[idx.prePosts] || '0'}</td>
-                        <td class="heat-cell" style="${getHeat(r[idx.views], 0, 250000)}">${r[idx.views] || '0'}</td>
-                        <td class="heat-cell" style="${getHeat(r[idx.engagement], 0, 15)}">${r[idx.engagement] || '0%'}</td>
-                        <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, 10000)}">${r[idx.ugc] || '0'}</td>`;
-        }
-        bodyRow += `</tr>`;
-        head += bodyRow;
-    });
-    document.getElementById('table-output').innerHTML = `<table>${head}</tbody></table>`;
-}
-
 Papa.parse(MASTER_CSV, {
     download: true, skipEmptyLines: true,
     complete: (res) => {
-        headers = res.data[0]; 
+        headers = res.data[0];
         allData = res.data.slice(1);
         const list = document.getElementById('artist-list');
         ARTISTS.sort().forEach(a => {
             let li = document.createElement('li'); li.innerText = a;
             li.onclick = () => { 
                 document.querySelectorAll('li').forEach(el=>el.classList.remove('active')); 
-                li.classList.add('active'); 
-                currentFilter = a; 
-                document.getElementById('view-title').innerText = a; 
-                render(); 
+                li.classList.add('active'); currentFilter = a; 
+                document.getElementById('view-title').innerText = a; render(); 
             };
             list.appendChild(li);
         });
