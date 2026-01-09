@@ -3,43 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Core - Priority Tracks v37</title>
+    <title>The Core - Command Center</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --gold: #C5A059; --bg: #000; --border: #333; --red: #ff4444; --green: #1DB954; }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
+        /* Sidebar */
         aside { width: 170px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
         .nav { flex: 1; overflow-y: auto; }
         ul { list-style: none; padding: 0; }
-        li { padding: 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; transition: 0.2s; }
+        li { padding: 8px 10px; cursor: pointer; color: #666; font-size: 0.7rem; border-radius: 4px; transition: 0.2s; margin-bottom: 2px; }
         li:hover { color: #fff; background: #1a1a1a; }
         li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
 
+        /* Main Content */
         main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-        .header-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 300; }
+        .header-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 300; gap: 20px; }
         
+        /* Search Bar */
+        .search-container { flex: 1; max-width: 400px; position: relative; }
+        #search-input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 6px; font-size: 0.8rem; outline: none; transition: border-color 0.3s; }
+        #search-input:focus { border-color: var(--gold); }
+
+        /* Table UI */
         .table-wrapper { flex: 1; overflow: auto; background: #000; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
-
-        thead th { 
-            position: sticky; top: 0; z-index: 200;
-            background-color: #111 !important; 
-            color: var(--gold) !important;
-            padding: 10px; font-size: 0.55rem; text-transform: uppercase;
-            border-bottom: 2px solid var(--gold); 
-            text-align: center; height: 70px; vertical-align: bottom; line-height: 1.1;
-        }
-
-        .sticky-song { 
-            position: sticky; left: 0; z-index: 210;
-            width: 180px !important;
-            background-color: #0a0a0a !important; 
-            border-right: 2px solid var(--border);
-            font-weight: bold; text-align: center; font-size: 0.75rem;
-        }
-
+        thead th { position: sticky; top: 0; z-index: 200; background-color: #111 !important; color: var(--gold) !important; padding: 10px; font-size: 0.55rem; text-transform: uppercase; border-bottom: 2px solid var(--gold); text-align: center; height: 70px; vertical-align: bottom; }
+        .sticky-song { position: sticky; left: 0; z-index: 210; width: 180px !important; background-color: #0a0a0a !important; border-right: 2px solid var(--border); font-weight: bold; text-align: center; font-size: 0.75rem; }
         td { padding: 10px 5px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.75rem; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .heat-cell { color: #000 !important; font-weight: 900; }
         
@@ -57,7 +49,12 @@
 
 <main>
     <div class="header-bar">
-        <h2 id="view-title" style="margin:0; font-size:1.1rem;">Priority Tracks</h2>
+        <h2 id="view-title" style="margin:0; font-size:1.1rem; min-width: 150px;">Priority Tracks</h2>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search song or artist..." onkeyup="render()">
+        </div>
+
         <div style="display:flex; gap:10px;">
             <button id="btn-released" class="toggle-btn active" onclick="setMode('released')">RELEASED</button>
             <button id="btn-unreleased" class="toggle-btn" onclick="setMode('unreleased')">UNRELEASED</button>
@@ -75,10 +72,18 @@ let headers = [];
 let currentFilter = null;
 let currentMode = 'released';
 
-const col = (name) => headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
+// Robust Mapping
+const col = (arr) => {
+    for (let name of arr) {
+        let found = headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
+        if (found !== -1) return found;
+    }
+    return -1;
+};
+
 const n = (v) => { if(!v) return 0; return parseFloat(String(v).replace(/[%,$]/g,'')) || 0; };
 
-// --- LOGIC FUNCTIONS ---
+// --- LOGIC ---
 function getHeat(val, min, max) {
     let num = n(val);
     if (num === 0) return 'background: #222; color: #666 !important;';
@@ -89,10 +94,10 @@ function getHeat(val, min, max) {
     return `background: rgb(${r},${g},${b});`;
 }
 
-function getPostHeat(val, redLimit, greenLimit) {
+function getPostHeat(val, redLim, greenLim) {
     let num = n(val);
-    if (num < redLimit) return 'background: var(--red);';
-    if (num >= greenLimit) return 'background: var(--green);';
+    if (num < redLim) return 'background: var(--red);';
+    if (num >= greenLim) return 'background: var(--green);';
     return 'background: #fff;';
 }
 
@@ -104,17 +109,24 @@ function getEngageHeat(val) {
 }
 
 function render() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    
     const idx = {
-        artist: col('ARTIST'), song: col('SONG'), status: col('Status'),
-        tease: col('1st Post'), relDate: col('RELEASE DATE'), updated: col('Updated'),
-        pre: col('Pre-Release Artist Posts per platform'),
-        post: col('Post-Release Artist Posts per platform'),
-        totalP: col('TOTAL artist posts per platform'),
-        wk1: col('1st Week streams'), curr: col('Current Streams'), avgS: col('Average Weekly Streams'),
-        ugc: col('Total UGC'), views: col('artist average views'), er: col('Artists Engagement Rate')
+        artist: col(['ARTIST']), song: col(['SONG']), status: col(['Status']),
+        tease: col(['1st Post', 'Date of 1st Post']), relDate: col(['RELEASE DATE']), updated: col(['Updated']),
+        pre: col(['Pre-Release Artist Posts per platform', '# of Artist Pre-Release Posts (IG + TikTok Only)']),
+        post: col(['Post-Release Artist Posts per platform', 'Artist POST-RELEASE TikTok Posts']),
+        totalP: col(['TOTAL artist posts per platform', 'Artist TOTAL Posts (IG + TikTok Only)']),
+        wk1: col(['1st Week streams', '1st Week on-demand streams']),
+        curr: col(['Current Streams', 'Current On-Demand Streams']),
+        avgS: col(['Average Weekly Streams']),
+        ugc: col(['Total UGC', 'Total Song UGC']),
+        views: col(['artist average views', 'Average Artist Views/Post']),
+        er: col(['Artists Engagement Rate', 'Artist Engagement Rate'])
     };
 
     const getLocalMax = (colIdx) => {
+        if (colIdx === -1) return 1;
         let pool = allData.filter(r => currentFilter ? r[idx.artist] === currentFilter : true);
         return Math.max(...pool.map(r => n(r[colIdx])), 1);
     };
@@ -126,50 +138,55 @@ function render() {
     const artistMaxUGC = getLocalMax(idx.ugc);
 
     let songs = allData.filter(r => {
-        const status = (r[idx.status] || "").trim().toLowerCase();
-        if (!r[idx.song]) return false;
-        if (currentMode === 'released' && status !== 'released') return false;
-        if (currentMode === 'unreleased' && status !== 'unreleased') return false;
-        return currentFilter ? r[idx.artist] === currentFilter : true;
+        const sVal = (r[idx.status] || "").trim().toLowerCase();
+        const artist = (r[idx.artist] || "");
+        const songName = (r[idx.song] || "");
+        
+        if (!songName) return false;
+        if (currentMode === 'released' && sVal !== 'released') return false;
+        if (currentMode === 'unreleased' && sVal !== 'unreleased') return false;
+        
+        // Apply Sidebar Filter
+        if (currentFilter && artist !== currentFilter) return false;
+        
+        // Apply Search Filter
+        if (query && !artist.toLowerCase().includes(query) && !songName.toLowerCase().includes(query)) return false;
+        
+        return true;
     });
 
-    let head = `<thead><tr>
-        <th class="sticky-song">Song</th>
-        <th style="width:100px">Artist</th>
-        <th style="width:80px">1st Tease</th>
-        <th style="width:80px">Rel Date</th>
-        <th style="width:80px">Updated</th>
-        <th>Pre-Rel Posts</th>
-        <th>1st Wk Streams</th>
-        <th>Post-Rel Posts</th>
-        <th>Current Streams</th>
-        <th>Avg Weekly</th>
-        <th>Total Posts</th>
-        <th>Avg Views</th>
-        <th>Eng %</th>
-        <th>Total UGC</th>
-    </tr></thead><tbody>`;
+    let head = `<thead><tr><th class="sticky-song">Song</th><th style="width:100px">Artist</th><th style="width:85px">1st Tease</th><th style="width:85px">Rel Date</th><th style="width:85px">Updated</th>`;
+    
+    if (currentMode === 'released') {
+        head += `<th>Pre-Rel</th><th>1st Wk</th><th>Post-Rel</th><th>Current</th><th>Avg Weekly</th><th>Total Posts</th><th>Avg Views</th><th>Eng %</th><th>Total UGC</th>`;
+    } else {
+        head += `<th>Pre-Rel</th><th>Avg Views</th><th>Eng %</th><th>Total UGC</th>`;
+    }
+    head += `</tr></thead><tbody>`;
 
     songs.forEach(r => {
         const ugcGoal = artistMaxUGC > 10000 ? artistMaxUGC : 10000;
-        
-        let row = `<tr>
-            <td class="sticky-song">${r[idx.song]}</td>
-            <td>${r[idx.artist]}</td>
-            <td>${r[idx.tease] || '-'}</td>
-            <td>${r[idx.relDate] || '-'}</td>
-            <td>${r[idx.updated] || '-'}</td>
-            <td class="heat-cell" style="${getPostHeat(r[idx.pre], 10, 19)}">${r[idx.pre] || 0}</td>
-            <td class="heat-cell" style="${getHeat(r[idx.wk1], 0, maxWk1)}">${r[idx.wk1] || 0}</td>
-            <td class="heat-cell" style="${getPostHeat(r[idx.post], 15, 24)}">${r[idx.post] || 0}</td>
-            <td class="heat-cell" style="${getHeat(r[idx.curr], 0, maxCurr)}">${r[idx.curr] || 0}</td>
-            <td class="heat-cell" style="${getHeat(r[idx.avgS], 0, maxAvgS)}">${r[idx.avgS] || 0}</td>
-            <td class="heat-cell" style="${getPostHeat(r[idx.totalP], 40, 49)}">${r[idx.totalP] || 0}</td>
-            <td class="heat-cell" style="${getHeat(r[idx.views], 0, maxViews)}">${r[idx.views] || 0}</td>
-            <td class="heat-cell" style="${getEngageHeat(r[idx.er])}">${r[idx.er] || '0%'}</td>
-            <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, ugcGoal)}">${r[idx.ugc] || 0}</td>
-        </tr>`;
-        head += row;
+        let row = `<tr><td class="sticky-song">${r[idx.song]}</td><td>${r[idx.artist]}</td><td>${r[idx.tease] || '-'}</td><td>${r[idx.relDate] || '-'}</td><td>${r[idx.updated] || '-'}</td>`;
+
+        if (currentMode === 'released') {
+            row += `
+                <td class="heat-cell" style="${getPostHeat(r[idx.pre], 10, 19)}">${r[idx.pre] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.wk1], 0, maxWk1)}">${r[idx.wk1] || 0}</td>
+                <td class="heat-cell" style="${getPostHeat(r[idx.post], 15, 24)}">${r[idx.post] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.curr], 0, maxCurr)}">${r[idx.curr] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.avgS], 0, maxAvgS)}">${r[idx.avgS] || 0}</td>
+                <td class="heat-cell" style="${getPostHeat(r[idx.totalP], 40, 49)}">${r[idx.totalP] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.views], 0, maxViews)}">${r[idx.views] || 0}</td>
+                <td class="heat-cell" style="${getEngageHeat(r[idx.er])}">${r[idx.er] || '0%'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, ugcGoal)}">${r[idx.ugc] || 0}</td>`;
+        } else {
+            row += `
+                <td class="heat-cell" style="${getPostHeat(r[idx.pre], 10, 19)}">${r[idx.pre] || 0}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.views], 0, maxViews)}">${r[idx.views] || 0}</td>
+                <td class="heat-cell" style="${getEngageHeat(r[idx.er])}">${r[idx.er] || '0%'}</td>
+                <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, 1000)}">${r[idx.ugc] || 0}</td>`;
+        }
+        head += row + `</tr>`;
     });
     document.getElementById('table-output').innerHTML = `<table>${head}</tbody></table>`;
 }
@@ -180,11 +197,16 @@ function clearFilter() { currentFilter = null; document.getElementById('view-tit
 Papa.parse(MASTER_CSV, {
     download: true, skipEmptyLines: true,
     complete: (res) => {
-        headers = res.data[0]; allData = res.data.slice(1);
+        headers = res.data[0]; 
+        allData = res.data.slice(1);
         const list = document.getElementById('artist-list');
         ARTISTS.sort().forEach(a => {
             let li = document.createElement('li'); li.innerText = a;
-            li.onclick = () => { document.querySelectorAll('li').forEach(el=>el.classList.remove('active')); li.classList.add('active'); currentFilter = a; document.getElementById('view-title').innerText = a; render(); };
+            li.onclick = () => { 
+                document.querySelectorAll('li').forEach(el=>el.classList.remove('active')); 
+                li.classList.add('active'); currentFilter = a; 
+                document.getElementById('view-title').innerText = a; render(); 
+            };
             list.appendChild(li);
         });
         render();
