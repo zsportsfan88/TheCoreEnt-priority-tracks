@@ -9,24 +9,49 @@
         :root { --gold: #C5A059; --bg: #000; --border: #333; --red: #ff4444; --green: #1DB954; }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        aside { width: 170px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
+        
+        aside { width: 200px; background: #0a0a0a; border-right: 1px solid var(--border); padding: 20px 10px; flex-shrink: 0; display: flex; flex-direction: column; }
         .nav { flex: 1; overflow-y: auto; }
         ul { list-style: none; padding: 0; }
-        li { padding: 8px 10px; cursor: pointer; color: #666; font-size: 0.7rem; border-radius: 4px; transition: 0.2s; margin-bottom: 2px; }
+        li { padding: 10px; cursor: pointer; color: #666; font-size: 0.75rem; border-radius: 4px; transition: 0.2s; margin-bottom: 2px; }
         li:hover { color: #fff; background: #1a1a1a; }
         li.active { color: #fff; border: 1px solid var(--gold); background: #111; font-weight: bold; }
+
         main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-        .header-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 300; gap: 20px; }
-        .search-container { flex: 1; max-width: 400px; position: relative; }
-        #search-input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 6px; font-size: 0.8rem; outline: none; transition: border-color 0.3s; }
-        #search-input:focus { border-color: var(--gold); }
-        .table-wrapper { flex: 1; overflow: auto; background: #000; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
-        thead th { position: sticky; top: 0; z-index: 200; background-color: #111 !important; color: var(--gold) !important; padding: 10px; font-size: 0.52rem; text-transform: uppercase; border-bottom: 2px solid var(--gold); text-align: center; height: 75px; vertical-align: bottom; }
-        .sticky-song { position: sticky; left: 0; z-index: 210; width: 160px !important; background-color: #0a0a0a !important; border-right: 2px solid var(--border); font-weight: bold; text-align: center; font-size: 0.72rem; }
-        td { padding: 10px 5px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.72rem; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .header-bar { padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 400; gap: 20px; }
+        .search-container { flex: 1; max-width: 400px; }
+        #search-input { width: 100%; background: #111; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 6px; font-size: 0.85rem; outline: none; }
+
+        .table-wrapper { flex: 1; overflow: auto; background: #000; position: relative; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        
+        /* Sticky Header Fixes */
+        thead th { 
+            position: sticky; top: 0; z-index: 300; 
+            background-color: #111 !important; color: var(--gold) !important; 
+            padding: 12px 10px; font-size: 0.58rem; text-transform: uppercase; 
+            border-bottom: 2px solid var(--gold); text-align: center; height: 85px;
+            min-width: 120px;
+        }
+        
+        /* Fixed Song Header (The top-left corner piece) */
+        thead th.sticky-song {
+            z-index: 350; /* Higher than other headers */
+            left: 0;
+            background-color: #111 !important;
+        }
+
+        /* Fixed Song Column */
+        td.sticky-song { 
+            position: sticky; left: 0; z-index: 210; 
+            min-width: 220px !important; background-color: #0a0a0a !important; 
+            border-right: 2px solid var(--border); font-weight: bold; 
+            text-align: left; padding-left: 15px !important; font-size: 0.8rem;
+        }
+
+        td { padding: 12px 10px; background: #0f0f0f; border-bottom: 1px solid var(--border); font-size: 0.82rem; color: #fff; text-align: center; white-space: nowrap; }
         .heat-cell { color: #000 !important; font-weight: 900; }
-        .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 8px 16px; cursor: pointer; font-size: 0.75rem; font-weight: bold; border-radius: 4px; }
+        .toggle-btn { background: #111; border: 1px solid var(--border); color: #888; padding: 10px 20px; cursor: pointer; font-size: 0.75rem; font-weight: bold; border-radius: 4px; }
         .toggle-btn.active { background: var(--gold); color: #000; }
     </style>
 </head>
@@ -35,7 +60,7 @@
 <aside>
     <div style="color:var(--gold); font-weight:900; letter-spacing:2px; margin-bottom:20px; text-align:center; font-size:0.9rem;">THE CORE</div>
     <div class="nav"><ul id="artist-list"></ul></div>
-    <div onclick="clearFilter()" style="padding:10px; color:var(--gold); text-align:center; border: 1px solid #333; margin-top:10px; cursor:pointer; font-size: 0.7rem;">SHOW ALL</div>
+    <div onclick="clearFilter()" style="padding:10px; color:var(--gold); text-align:center; border: 1px solid #333; margin-top:10px; cursor:pointer; font-size: 0.75rem;">SHOW ALL</div>
 </aside>
 
 <main>
@@ -51,8 +76,8 @@
 </main>
 
 <script>
-// YOUR CSV URL
 const MASTER_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTp-yQVU_VNNOR5aXQ7m-Xv7BiAgYKjBfJuT6lIETy6ksjqR-Lj2WW4DNqYGCNX2rfCpUtemiS1shes/pub?gid=2070907343&single=true&output=csv';
+const EXCLUDE_LIST = ["Ryan Hurd", "Clever"]; 
 const ARTISTS = ["Anna Graves", "Bailey Zimmerman", "Baylee Lynn", "Brandon Wisham", "Cameron Whitcomb", "Dan + Shay", "Danielle Bradbery", "Dax", "Deltona", "Hannah McFarland", "Josh Ross", "Just Jayne", "Nate Smith"];
 
 let allData = [];
@@ -98,22 +123,26 @@ function render() {
     const query = document.getElementById('search-input').value.toLowerCase();
     const idx = {
         artist: col(['ARTIST']), song: col(['SONG']), status: col(['Status']),
-        tease: col(['1st Post', 'Date of 1st Post', '1st Song Tease']), 
-        relDate: col(['RELEASE DATE']), updated: col(['Updated', 'Last Updated']),
-        pre: col(['Pre-Release Artist Posts per platform', '# of Artist Pre-Release Posts (IG + TikTok Only)']),
-        post: col(['Post-Release Artist Posts per platform', 'Artist POST-RELEASE TikTok Posts']),
-        totalP: col(['TOTAL artist posts per platform', 'Artist TOTAL Posts (IG + TikTok Only)']),
-        wk1: col(['1st Week streams', '1st Week on-demand streams']),
-        curr: col(['Current Streams', 'Current On-Demand Streams']),
-        avgS: col(['Average Weekly Streams']),
-        ugc: col(['Total UGC', 'Total Song UGC']),
-        views: col(['artist average views', 'Average Artist Views/Post']),
-        er: col(['Artists Engagement Rate', 'Artist Engagement Rate'])
+        tease: col(['1st Song Tease', '1st Post', 'Date of 1st Post']), 
+        relDate: col(['RELEASE DATE']), updated: col(['Last Updated', 'Updated']),
+        pre: col(['Pre-Release Posts/ Platform', 'Pre-Release Artist Posts per platform', '# of Artist Pre-Release Posts (IG + TikTok Only)']),
+        post: col(['Post-Release Posts/ Platform', 'Post-Release Artist Posts per platform']),
+        totalP: col(['Total Posts/ Platform', 'TOTAL artist posts per platform']),
+        wk1: col(['1st Wk Streams', '1st Week streams']), 
+        curr: col(['Current Streams']),
+        avgS: col(['Avg Weekly Streams']),
+        ugc: col(['Total UGC']), 
+        views: col(['Avg Views/ Post', 'artist average views']),
+        er: col(['Engagement Rate', 'Artists Engagement Rate'])
     };
 
     const getLocalMax = (colIdx) => {
         if (colIdx === -1) return 1;
-        let pool = allData.filter(r => currentFilter ? r[idx.artist] === currentFilter : true);
+        let pool = allData.filter(r => {
+            const artist = r[idx.artist] || "";
+            if (EXCLUDE_LIST.includes(artist)) return false;
+            return currentFilter ? artist === currentFilter : true;
+        });
         return Math.max(...pool.map(r => n(r[colIdx])), 1);
     };
 
@@ -127,7 +156,7 @@ function render() {
         const sVal = (r[idx.status] || "").trim().toLowerCase();
         const artist = (r[idx.artist] || "");
         const songName = (r[idx.song] || "");
-        if (!songName) return false;
+        if (!songName || EXCLUDE_LIST.includes(artist)) return false;
         if (currentMode === 'released' && sVal !== 'released') return false;
         if (currentMode === 'unreleased' && sVal !== 'unreleased') return false;
         if (currentFilter && artist !== currentFilter) return false;
@@ -135,7 +164,7 @@ function render() {
         return true;
     });
 
-    let head = `<thead><tr><th class="sticky-song">Song</th><th style="width:100px">Artist</th><th style="width:85px">1st Song Tease</th><th style="width:85px">Release Date</th><th style="width:85px">Last Updated</th>`;
+    let head = `<thead><tr><th class="sticky-song">Song</th><th style="min-width:180px">Artist</th><th>1st Song Tease</th><th>Release Date</th><th>Last Updated</th>`;
     
     if (currentMode === 'released') {
         head += `<th>Pre-Release Posts/ Platform</th><th>1st Wk Streams</th><th>Post-Release Posts/ Platform</th><th>Current Streams</th><th>Avg Weekly Streams</th><th>Total Posts/ Platform</th><th>Avg Views/ Post</th><th>Engagement Rate</th><th>Total UGC</th>`;
@@ -146,7 +175,12 @@ function render() {
 
     songs.forEach(r => {
         const ugcGoal = artistMaxUGC > 10000 ? artistMaxUGC : 10000;
-        let row = `<tr><td class="sticky-song">${r[idx.song]}</td><td>${r[idx.artist]}</td><td>${r[idx.tease] || '-'}</td><td>${r[idx.relDate] || '-'}</td><td>${r[idx.updated] || '-'}</td>`;
+        let row = `<tr>
+            <td class="sticky-song">${r[idx.song]}</td>
+            <td style="text-align:left; font-weight:bold;">${r[idx.artist]}</td>
+            <td>${r[idx.tease] || '-'}</td>
+            <td>${r[idx.relDate] || '-'}</td>
+            <td>${r[idx.updated] || '-'}</td>`;
 
         if (currentMode === 'released') {
             row += `
@@ -164,7 +198,7 @@ function render() {
                 <td class="heat-cell" style="${getPostHeat(r[idx.pre], 10, 19)}">${r[idx.pre] || 0}</td>
                 <td class="heat-cell" style="${getHeat(r[idx.views], 0, maxViews)}">${r[idx.views] || 0}</td>
                 <td class="heat-cell" style="${getEngageHeat(r[idx.er])}">${r[idx.er] || '0%'}</td>
-                <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, 1000)}">${r[idx.ugc] || 0}</td>`;
+                <td class="heat-cell" style="${getHeat(r[idx.ugc], 0, 10000)}">${r[idx.ugc] || 0}</td>`;
         }
         head += row + `</tr>`;
     });
